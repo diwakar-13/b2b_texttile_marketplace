@@ -13,7 +13,7 @@ export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  role: varchar("role", { length: 20 }).notNull(),
+  role: varchar("role", { length: 20 }),
   phone: varchar("phone", { length: 20 }),
   avatar: varchar("avatar", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -43,7 +43,7 @@ export const supplierProfiles = pgTable("supplier_profiles", {
     .references(() => profiles.id, {
       onDelete: "cascade",
     }),
-  businessName: varchar("business_name", { length: 255 }).notNull(),
+  businessName: varchar("business_name", { length: 255 }),
   businessType: varchar("business_type", { length: 100 }),
   contactNumber: varchar("contact_number", { length: 20 }),
   businessAddress: text("business_address"),

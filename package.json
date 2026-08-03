@@ -18,7 +18,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.44.7",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.28.0",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^0.30.6",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4"
