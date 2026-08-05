@@ -4,6 +4,8 @@ import BrowseMarketplace from "@/components/home/BrowseMarketPlace";
 import PremiumCategories from "@/components/home/Categories";
 import FeaturedMarketplace from "@/components/home/FeaturedMarketplace";
 import SearchHero from "@/components/home/SearchHero";
+import Footer from "@/components/layout/Footer";
+
 import Header from "@/components/layout/Navbar";
 import { useState } from "react";
 
@@ -22,6 +24,7 @@ export default function HomePage() {
           <PremiumCategories />
           <FeaturedMarketplace />
           <BrowseMarketplace />
+         <Footer />
         </main>
       </div>
     </div>

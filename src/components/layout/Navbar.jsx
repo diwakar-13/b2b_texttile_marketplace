@@ -6,10 +6,9 @@ import {
   Search,
   Menu,
   X,
-  Building2,
-  PhoneCall,
   Store,
   Briefcase,
+  PhoneCall,
   ArrowRight,
 } from "lucide-react";
 import { useMarketplace } from "@/context/MarketplaceContext";
@@ -38,6 +37,7 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearchFocused(false);
+      setIsMobileMenuOpen(false);
       router.push(
         `/marketplace?category=${encodeURIComponent(searchQuery.trim())}`,
       );
@@ -72,6 +72,12 @@ export default function Navbar() {
               className="px-3 py-1.5 rounded-full hover:bg-neutral-100 text-neutral-800 transition-colors"
             >
               Marketplace
+            </Link>
+            <Link
+              href="/supplier"
+              className="px-3 py-1.5 rounded-full hover:bg-neutral-100 text-neutral-800 transition-colors"
+            >
+              Suppliers
             </Link>
             <Link
               href="#contact"
@@ -213,7 +219,7 @@ export default function Navbar() {
         <div className="flex items-center sm:hidden shrink-0">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-1.5 rounded-full bg-[#F4F4F2] text-neutral-800"
+            className="p-1.5 rounded-full bg-[#F4F4F2] text-neutral-800 cursor-pointer"
           >
             {isMobileMenuOpen ? (
               <X className="w-4 h-4" />
@@ -222,6 +228,72 @@ export default function Navbar() {
             )}
           </button>
         </div>
+
+        {/* MOBILE DROPDOWN MENU */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-16 left-0 right-0 bg-white border border-black/10 rounded-2xl shadow-xl p-4 sm:hidden z-50 space-y-3"
+            >
+              <div className="flex flex-col space-y-1">
+                <Link
+                  href="/marketplace"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
+                >
+                  <span className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-indigo-600" /> Marketplace
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                </Link>
+
+                <Link
+                  href="/supplier"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
+                >
+                  <span className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-indigo-600" /> Suppliers
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                </Link>
+
+                <Link
+                  href="#contact"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
+                >
+                  <span className="flex items-center gap-2">
+                    <PhoneCall className="w-4 h-4 text-indigo-600" /> Contact Us
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                </Link>
+              </div>
+
+              <div className="pt-2 border-t border-black/5 flex flex-col gap-2">
+                <Link
+                  href="/register?role=supplier"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-xl border border-black/10 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors"
+                >
+                  Become a Supplier
+                </Link>
+
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-xl bg-[#111111] text-xs font-bold text-white shadow-xs hover:bg-neutral-800 transition-colors"
+                >
+                  Login
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
     </header>
   );
