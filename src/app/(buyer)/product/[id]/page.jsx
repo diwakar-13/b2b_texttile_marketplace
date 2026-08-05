@@ -12,25 +12,123 @@ import {
   MapPin,
   Lock,
   Box,
-  Heart,
-  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
+import RecommendedProducts from "@/components/product/RecommandedProduct";
+
+// Color Shades with mapped images for interactive switching
+const SHADES = [
+  {
+    name: "Natural Beige",
+    hex: "#D1C7BD",
+    img: "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600",
+  },
+  {
+    name: "Sand Taupe",
+    hex: "#B8A99A",
+    img: "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=600",
+  },
+  {
+    name: "Soft Ivory",
+    hex: "#E5DEC9",
+    img: "https://images.unsplash.com/photo-1563212048-a006ee787e93?q=80&w=600",
+  },
+  {
+    name: "Earth Brown",
+    hex: "#4A3E3D",
+    img: "https://images.unsplash.com/photo-1528458876861-544fd1761a91?q=80&w=600",
+  },
+];
+
+// 💀 SKELETON COMPONENT FOR PRODUCT DETAIL PAGE
+function ProductDetailSkeleton() {
+  return (
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 space-y-12 animate-pulse">
+      {/* TOP PRODUCT SECTION SKELETON */}
+      <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-2xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* GALLERY LEFT */}
+        <div className="lg:col-span-6 flex gap-4">
+          <div className="flex-1 h-[420px] rounded-2xl bg-neutral-200" />
+        </div>
+
+        {/* SPECS RIGHT */}
+        <div className="lg:col-span-6 space-y-5">
+          <div className="space-y-2">
+            <div className="h-8 bg-neutral-200 rounded-lg w-3/4" />
+            <div className="h-3 bg-neutral-200 rounded w-1/4" />
+          </div>
+
+          <div className="flex gap-2">
+            <div className="h-4 bg-neutral-200 rounded w-1/3" />
+            <div className="h-4 bg-neutral-200 rounded w-1/4" />
+          </div>
+
+          <div className="h-10 bg-neutral-200 rounded-xl w-1/2 pt-2" />
+
+          <div className="space-y-2 pt-2">
+            <div className="h-3 bg-neutral-200 rounded w-1/4" />
+            <div className="flex gap-2.5">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="w-8 h-8 rounded-lg bg-neutral-200" />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <div className="h-3 bg-neutral-200 rounded w-1/4" />
+            <div className="h-10 bg-neutral-200 rounded-xl w-2/3" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <div className="h-12 bg-neutral-200 rounded-xl" />
+            <div className="h-12 bg-neutral-200 rounded-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* HIGHLIGHTS BAR SKELETON */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-white rounded-2xl border border-black/5">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-neutral-200" />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 bg-neutral-200 rounded w-3/4" />
+              <div className="h-2 bg-neutral-200 rounded w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TABS SKELETON */}
+      <div className="bg-white p-6 rounded-3xl border border-black/5 space-y-4">
+        <div className="flex gap-8 border-b border-black/5 pb-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-4 bg-neutral-200 rounded w-20" />
+          ))}
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 bg-neutral-200 rounded w-full" />
+          <div className="h-3 bg-neutral-200 rounded w-5/6" />
+          <div className="h-3 bg-neutral-200 rounded w-4/6" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ProductDetailPage({ params }) {
   const resolvedParams = use(params);
   const productId = resolvedParams.id;
 
   const [product, setProduct] = useState(null);
-  const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(800);
   const [selectedImage, setSelectedImage] = useState("");
   const [activeTab, setActiveTab] = useState("Description");
+  const [selectedShade, setSelectedShade] = useState(SHADES[0]);
 
-  // 1. FETCH MAIN PRODUCT DETAILS
   useEffect(() => {
     async function fetchProductById() {
       setLoading(true);
@@ -43,13 +141,7 @@ export default function ProductDetailPage({ params }) {
           setQuantity(data.product.moq || 800);
 
           const primaryImg = data.product.image || data.product.imageUrl;
-          setSelectedImage(
-            primaryImg ||
-              "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600",
-          );
-
-          // 2. FETCH RECOMMENDED PRODUCTS BASED ON MATERIAL / CATEGORY
-          fetchRecommended(data.product.material, data.product.id);
+          setSelectedImage(primaryImg || SHADES[0].img);
         } else {
           setError(data.message || "Product not found");
         }
@@ -61,34 +153,21 @@ export default function ProductDetailPage({ params }) {
       }
     }
 
-    async function fetchRecommended(material, currentId) {
-      try {
-        const res = await axios.get("/api/products", {
-          params: { category: material, limit: 5 },
-        });
-
-        if (res.data.success && res.data.products) {
-          // Current Product ko excludes karke filter karein
-          const filtered = res.data.products.filter(
-            (item) => item.id !== currentId,
-          );
-          setRecommendedProducts(filtered.slice(0, 4));
-        }
-      } catch (err) {
-        console.error("Recommended fetch error:", err);
-      }
-    }
-
     if (productId) fetchProductById();
   }, [productId]);
 
+  // Color click shade switcher handler
+  const handleShadeChange = (shade) => {
+    setSelectedShade(shade);
+    setSelectedImage(shade.img);
+  };
+
+  // RENDERS SKELETON WHILE LOADING
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50/50">
+      <div className="min-h-screen bg-[#F8F9FA]">
         <Navbar />
-        <div className="max-w-[1240px] mx-auto px-4 py-20 text-center text-xs font-bold text-neutral-400 animate-pulse">
-          Loading Fabric Details & Recommendations from DB...
-        </div>
+        <ProductDetailSkeleton />
       </div>
     );
   }
@@ -112,13 +191,6 @@ export default function ProductDetailPage({ params }) {
     );
   }
 
-  const dbImages =
-    product.images && product.images.length > 0
-      ? product.images
-      : [product.image];
-
-  const colors = ["#D1C7BD", "#B8A99A", "#E5DEC9", "#A89B8C", "#4A3E3D"];
-
   const totalPrice = (product.price * quantity).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -133,73 +205,50 @@ export default function ProductDetailPage({ params }) {
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-2xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* GALLERY LEFT */}
           <div className="lg:col-span-6 flex gap-4">
-            {dbImages.length > 1 && (
-              <div className="flex flex-col gap-3 shrink-0">
-                {dbImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(img)}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
-                      selectedImage === img
-                        ? "border-black shadow-xs scale-95"
-                        : "border-transparent hover:border-neutral-300"
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600";
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="flex-1 h-[420px] rounded-2xl overflow-hidden bg-neutral-100 border border-black/5">
+            <div className="flex-1 h-[420px] rounded-xl overflow-hidden bg-neutral-100 border border-black/5 relative">
               <img
                 src={selectedImage}
                 alt={product.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-all duration-300"
                 onError={(e) => {
                   e.currentTarget.src =
                     "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600";
                 }}
               />
+              <span className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                Shade: {selectedShade.name}
+              </span>
             </div>
           </div>
 
           {/* PRODUCT SPECS RIGHT */}
           <div className="lg:col-span-6 space-y-5">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 ">
                 {product.title}
               </h1>
-              <p className="text-xs text-neutral-400 font-semibold mt-1">
+              <p className=" text-sm text-neutral-500 font-semibold mt-1">
                 GSM: {product.gsm}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600 font-medium pt-1">
-              <div className="flex items-center gap-1 text-amber-500 font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600 font-medium pt-1">
+              {/* <div className="flex items-center gap-1 text-amber-500 font-bold">
                 <Star className="w-3.5 h-3.5 fill-amber-500" />
                 <span>4.8</span>
                 <span className="text-neutral-400 font-normal">
                   (150 reviews)
                 </span>
               </div>
-              <span>•</span>
+              <span>•</span> */}
               <span className="font-bold text-neutral-800">
                 {product.supplierName || product.supplier || "Verified Mill"}
               </span>
               <span>•</span>
               <div className="flex items-center gap-1 text-neutral-500">
-                <MapPin className="w-3 h-3" /> India
+                <MapPin className="w-3 h-3 text-black" /> India
               </div>
-              <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold text-[10px]">
+              <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold text-[12px]">
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified
                 Supplier
               </div>
@@ -207,37 +256,43 @@ export default function ProductDetailPage({ params }) {
 
             <div className="flex items-baseline gap-4 pt-2 border-t border-black/5">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-neutral-900">
+                <span className="text-3xl font-bold text-neutral-900">
                   ${product.price}
                 </span>
-                <span className="text-xs text-neutral-400 font-bold">
+                <span className="text-sm text-neutral-500 font-bold">
                   /meter
                 </span>
               </div>
-              <span className="text-xs font-bold text-neutral-500">
+              <span className="text-sm font-bold text-neutral-500">
                 MOQ {product.moq || 800} meters
               </span>
             </div>
 
+            {/* WORKING SHADE COLOR SWITCHER */}
             <div className="space-y-2 pt-2">
               <span className="text-xs font-bold text-neutral-600 block">
-                Available Shades
+                Color Shade:{" "}
+                <span className="text-indigo-600 font-extrabold">
+                  {selectedShade.name}
+                </span>
               </span>
-              <div className="flex items-center gap-2">
-                {colors.map((c, i) => (
-                  <div
+              <div className="flex items-center gap-2.5">
+                {SHADES.map((s, i) => (
+                  <button
                     key={i}
-                    style={{ backgroundColor: c }}
-                    className={`w-7 h-7 rounded-lg border-2 cursor-pointer transition-transform ${
-                      i === 0
-                        ? "border-black scale-105 shadow-xs"
-                        : "border-transparent hover:scale-105"
+                    onClick={() => handleShadeChange(s)}
+                    style={{ backgroundColor: s.hex }}
+                    className={`w-8 h-8 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedShade.name === s.name
+                        ? "border-black scale-110 shadow-md ring-2 ring-indigo-500/20"
+                        : "border-transparent hover:scale-105 opacity-80 hover:opacity-100"
                     }`}
                   />
                 ))}
               </div>
             </div>
 
+            {/* QUANTITY COUNTER */}
             <div className="space-y-2 pt-2">
               <span className="text-xs font-bold text-neutral-600 block">
                 Quantity (meters)
@@ -263,7 +318,7 @@ export default function ProductDetailPage({ params }) {
 
                 <div className="text-xs font-bold text-neutral-500">
                   Total:{" "}
-                  <span className="text-lg font-black text-neutral-900">
+                  <span className="text-lg font-bold text-neutral-900">
                     ${totalPrice}
                   </span>
                 </div>
@@ -282,16 +337,16 @@ export default function ProductDetailPage({ params }) {
         </div>
 
         {/* HIGHLIGHTS BAR */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-white rounded-2xl border border-black/5 shadow-2xs text-xs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-white rounded-2xl border border-black/5 shadow-2xs text-sm">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-neutral-100 rounded-xl">
               <ShieldCheck className="w-5 h-5 text-neutral-700" />
             </div>
             <div>
-              <div className="font-extrabold text-neutral-900">
+              <div className="font-bold md:text-lg text-neutral-900">
                 Premium Quality
               </div>
-              <div className="text-[10px] text-neutral-400 font-semibold">
+              <div className="text-[10px] md:text-[13px] text-neutral-500 font-semibold">
                 Carefully selected fabrics
               </div>
             </div>
@@ -302,8 +357,10 @@ export default function ProductDetailPage({ params }) {
               <Box className="w-5 h-5 text-neutral-700" />
             </div>
             <div>
-              <div className="font-extrabold text-neutral-900">In Stock</div>
-              <div className="text-[10px] text-neutral-400 font-semibold">
+              <div className="font-bold md:text-lg text-neutral-900">
+                In Stock
+              </div>
+              <div className="text-[10px] md:text-[13px] text-neutral-500 font-semibold">
                 Ready to ship
               </div>
             </div>
@@ -314,10 +371,10 @@ export default function ProductDetailPage({ params }) {
               <Truck className="w-5 h-5 text-neutral-700" />
             </div>
             <div>
-              <div className="font-extrabold text-neutral-900">
+              <div className="font-bold md:text-lg text-neutral-900">
                 Fast Delivery
               </div>
-              <div className="text-[10px] text-neutral-400 font-semibold">
+              <div className="text-[10px] md:text-[13px] text-neutral-500 font-semibold">
                 2-5 business days
               </div>
             </div>
@@ -328,10 +385,10 @@ export default function ProductDetailPage({ params }) {
               <Lock className="w-5 h-5 text-neutral-700" />
             </div>
             <div>
-              <div className="font-extrabold text-neutral-900">
+              <div className="font-bold md:text-lg text-neutral-900">
                 Secure Payment
               </div>
-              <div className="text-[10px] text-neutral-400 font-semibold">
+              <div className="text-[10px] md:text-[13px] text-neutral-500 font-semibold">
                 100% secure checkout
               </div>
             </div>
@@ -346,7 +403,7 @@ export default function ProductDetailPage({ params }) {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`text-xs font-extrabold cursor-pointer transition-colors relative pb-3 -mb-3 ${
+                  className={`md:text-lg text-xs font-bold cursor-pointer transition-colors relative pb-3 -mb-3 ${
                     activeTab === tab
                       ? "text-neutral-900 border-b-2 border-black"
                       : "text-neutral-400 hover:text-neutral-700"
@@ -358,21 +415,26 @@ export default function ProductDetailPage({ params }) {
             )}
           </div>
 
-          <div className="text-xs text-neutral-600 leading-relaxed">
+          <div className="text-sm text-neutral-600 leading-relaxed">
             {activeTab === "Description" && (
               <div className="space-y-4">
                 <p>
                   {product.description ||
                     `Our ${product.title} is crafted with precision to deliver exceptional softness, durability, and breathability.`}
                 </p>
-                <ul className="list-disc pl-4 space-y-1 font-semibold text-neutral-700">
+                <ul className="list-disc pl-4 space-y-1  text-neutral-700">
                   <li>
-                    Composition:{" "}
+                    <span className="font-bold">Composition: </span>
                     {product.composition || "100% Certified Organic"}
                   </li>
-                  <li>Smooth and soft surface texture</li>
-                  <li>High tensile strength and tear resistance</li>
-                  <li>Pre-shrunk and color fast</li>
+                  <li>
+                    <span className="font-bold">Selected Shade: </span>
+                    {selectedShade.name}
+                  </li>
+                  <li className="font-medium">
+                    High tensile strength and tear resistance
+                  </li>
+                  <li className="font-medium">Pre-shrunk and color fast</li>
                 </ul>
               </div>
             )}
@@ -380,7 +442,7 @@ export default function ProductDetailPage({ params }) {
             {activeTab === "Specifications" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-3 rounded-xl bg-neutral-50 border border-black/5 space-y-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase">
+                  <span className="text-[10px] md:text-[13px] text-neutral-500 font-bold uppercase">
                     Fabric Material
                   </span>
                   <div className="font-bold text-neutral-800">
@@ -388,7 +450,7 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-50 border border-black/5 space-y-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase">
+                  <span className="text-[10px] md:text-[13px] text-neutral-500 font-bold uppercase">
                     GSM Weight
                   </span>
                   <div className="font-bold text-neutral-800">
@@ -396,7 +458,7 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-50 border border-black/5 space-y-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase">
+                  <span className="text-[10px] md:text-[13px] text-neutral-500 font-bold uppercase">
                     Fabric Width
                   </span>
                   <div className="font-bold text-neutral-800">
@@ -404,7 +466,7 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-50 border border-black/5 space-y-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase">
+                  <span className="text-[10px] md:text-[13px] text-neutral-500 font-bold uppercase">
                     Min Order Quantity
                   </span>
                   <div className="font-bold text-neutral-800">
@@ -416,7 +478,7 @@ export default function ProductDetailPage({ params }) {
 
             {activeTab === "Shipping" && (
               <div className="space-y-2">
-                <h4 className="font-bold text-neutral-900">
+                <h4 className="font-bold md:text-lg text-neutral-900">
                   Global Mill Dispatch Terms
                 </h4>
                 <p>
@@ -441,103 +503,11 @@ export default function ProductDetailPage({ params }) {
           </div>
         </div>
 
-        {/* 🌟 RECOMMENDED PRODUCTS SECTION */}
-        {recommendedProducts.length > 0 && (
-          <div className="space-y-6 pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-extrabold text-neutral-900">
-                  Recommended Fabrics
-                </h3>
-                <p className="text-xs text-neutral-400 font-medium">
-                  Similar {product.material} textiles from top mills
-                </p>
-              </div>
-
-              <Link
-                href="/marketplace"
-                className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
-              >
-                View Marketplace <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {recommendedProducts.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/product/${item.id}`}
-                  className="group relative rounded-2xl border border-black/5 bg-white p-3 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between cursor-pointer block"
-                >
-                  <div>
-                    <div className="relative h-40 w-full rounded-xl overflow-hidden bg-neutral-100">
-                      <img
-                        src={
-                          item.image ||
-                          "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600"
-                        }
-                        alt={item.title || item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600";
-                        }}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-white/80 backdrop-blur-xs text-neutral-600 hover:text-red-500 transition-colors cursor-pointer"
-                      >
-                        <Heart className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="pt-3 space-y-1">
-                      <h4 className="font-extrabold text-sm text-neutral-900 truncate group-hover:text-indigo-600 transition-colors">
-                        {item.title || item.name}
-                      </h4>
-                      <div className="flex items-center justify-between text-[10px] text-neutral-400 font-medium">
-                        <span>GSM: {item.gsm}</span>
-                        <span>{item.width}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between text-sm pt-1">
-                        <span className="font-black text-neutral-900">
-                          ₹{item.price}{" "}
-                          <span className="text-[10px] font-normal text-neutral-400">
-                            /meter
-                          </span>
-                        </span>
-                        <span className="text-[9px] font-semibold text-neutral-500">
-                          MOQ {item.moq}m
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/5">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-neutral-800">
-                        <span className="truncate">
-                          {item.supplier ||
-                            item.supplierName ||
-                            "Verified Mill"}
-                        </span>
-                        <CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0" />
-                      </div>
-                    </div>
-
-                    <div className="p-1.5 rounded-xl bg-neutral-100 text-neutral-800 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* 🌟 REUSABLE RECOMMENDED PRODUCTS COMPONENT */}
+        <RecommendedProducts
+          material={product.material}
+          currentProductId={product.id}
+        />
       </main>
     </div>
   );

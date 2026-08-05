@@ -16,7 +16,7 @@ const OfferCard = forwardRef(({ offer, onClick }, ref) => (
   <motion.div
     ref={ref}
     onClick={() => onClick && onClick(offer)}
-    className="relative flex-shrink-0 w-[280px] sm:w-[300px] bg-white dark:bg-[#111114] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all snap-start cursor-pointer group"
+    className="relative flex-shrink-0 w-[280px] sm:w-[300px] bg-white dark:bg-[#111114] border border-black/10 dark:border-white/10 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all snap-start cursor-pointer group"
     whileHover={{ y: -3 }}
     transition={{ duration: 0.15, ease: "easeOut" }} // Fast snappy animation
   >
@@ -34,7 +34,7 @@ const OfferCard = forwardRef(({ offer, onClick }, ref) => (
         </span>
       )}
 
-      <button
+      {/* <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
@@ -42,7 +42,7 @@ const OfferCard = forwardRef(({ offer, onClick }, ref) => (
         className="absolute top-3 right-3 size-8 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:text-red-500 transition-colors shadow-xs"
       >
         <Heart className="w-4 h-4" />
-      </button>
+      </button> */}
     </div>
 
     {/* Content Area */}
@@ -51,7 +51,7 @@ const OfferCard = forwardRef(({ offer, onClick }, ref) => (
         <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
           {offer.title}
         </h3>
-        <p className="text-[11px] font-medium text-gray-400 mt-0.5">
+        <p className="text-[12px] font-medium text-neutral-500 mt-0.5">
           GSM: {offer.gsm}
         </p>
       </div>
@@ -61,12 +61,12 @@ const OfferCard = forwardRef(({ offer, onClick }, ref) => (
           <span className="text-base font-bold text-gray-900 dark:text-white">
             {offer.price}
           </span>
-          <span className="text-[10px] font-normal text-gray-400 ml-1">
+          <span className="text-[12px] font-normal text-neutral-500 ml-1">
             / meter
           </span>
         </div>
 
-        <span className="text-[10px] font-medium text-gray-400">
+        <span className="text-[12px] font-medium text-neutral-500">
           MOQ {offer.moq} meters
         </span>
       </div>
