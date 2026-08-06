@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -16,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useMarketplace } from "@/context/MarketplaceContext";
+import { useCart } from "@/context/CartContext";
 
 const MATERIALS = [
   "All",
@@ -45,15 +45,17 @@ function ProductCardSkeleton() {
 
 export default function BrowseMarketplace() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [addingId, setAddingId] = useState(null);
+  const [addedIds, setAddedIds] = useState([]);
 
-  // PREVENT BACKGROUND BODY SCROLL WHEN MOBILE DRAWER IS OPEN
+  const { addToCart } = useCart();
+
   useEffect(() => {
     if (isMobileFilterOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -79,6 +81,22 @@ export default function BrowseMarketplace() {
     resetFilters,
   } = useMarketplace();
 
+  const handleAddToCart = async (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddingId(item.id);
+
+    const success = await addToCart(item);
+
+    setAddingId(null);
+    if (success) {
+      setAddedIds((prev) => [...prev, item.id]);
+      setTimeout(() => {
+        setAddedIds((prev) => prev.filter((id) => id !== item.id));
+      }, 2000);
+    }
+  };
+
   const FilterContent = () => (
     <div className="space-y-5">
       <div className="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/5">
@@ -90,7 +108,6 @@ export default function BrowseMarketplace() {
           <RotateCcw className="w-3 h-3" /> Clear all
         </button>
       </div>
-
       <div className="space-y-2">
         <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
           <Layers className="w-3.5 h-3.5 text-indigo-500" /> Fabric Material
@@ -111,7 +128,6 @@ export default function BrowseMarketplace() {
           ))}
         </div>
       </div>
-
       <div className="space-y-2 pt-3 border-t border-black/5 dark:border-white/5">
         <div className="flex justify-between items-center text-sm font-bold text-neutral-700 dark:text-neutral-300">
           <span>Max Weight ({maxGsm} GSM)</span>
@@ -126,7 +142,6 @@ export default function BrowseMarketplace() {
           className="w-full accent-black dark:accent-white cursor-pointer"
         />
       </div>
-
       <div className="space-y-2 pt-3 border-t border-black/5 dark:border-white/5">
         <div className="flex justify-between items-center text-sm font-bold text-neutral-700 dark:text-neutral-300">
           <span>Max Price (₹{priceMax})</span>
@@ -141,7 +156,6 @@ export default function BrowseMarketplace() {
           className="w-full accent-black dark:accent-white cursor-pointer"
         />
       </div>
-
       <div className="space-y-2 pt-3 border-t border-black/5 dark:border-white/5">
         <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
           <Ruler className="w-3.5 h-3.5 text-indigo-500" /> Fabric Width
@@ -158,7 +172,6 @@ export default function BrowseMarketplace() {
           ))}
         </select>
       </div>
-
       <div className="space-y-2 pt-3 border-t border-black/5 dark:border-white/5">
         <div className="flex justify-between items-center text-sm font-bold text-neutral-700 dark:text-neutral-300">
           <span>Max MOQ ({moqMax}m)</span>
@@ -182,7 +195,6 @@ export default function BrowseMarketplace() {
         <h2 className="text-xl sm:text-3xl font-bold text-neutral-900 dark:text-white">
           Browse Marketplace
         </h2>
-
         <div className="flex items-center justify-between md:justify-end gap-3 text-sm">
           <button
             onClick={() => setIsMobileFilterOpen(true)}
@@ -190,11 +202,9 @@ export default function BrowseMarketplace() {
           >
             <Filter className="w-3.5 h-3.5" /> Filters
           </button>
-
           <span className="text-neutral-500 font-medium text-xs sm:text-sm">
             {totalCount} products loaded
           </span>
-
           <div className="flex items-center gap-2">
             <span className="text-neutral-500 font-semibold hidden sm:inline">
               Sort by:
@@ -206,12 +216,10 @@ export default function BrowseMarketplace() {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
         <div className="hidden lg:block lg:col-span-3 self-start bg-white dark:bg-[#111114] p-5 rounded-2xl border border-black/5 dark:border-white/10 shadow-2xs z-10">
           <FilterContent />
         </div>
-
         {isMobileFilterOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex justify-end bg-black/60 backdrop-blur-xs">
             <div className="w-full max-w-xs bg-white dark:bg-[#111114] h-full p-5 overflow-y-auto space-y-4 shadow-2xl animate-in slide-in-from-right duration-200">
@@ -226,9 +234,7 @@ export default function BrowseMarketplace() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <FilterContent />
-
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
                 className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-bold text-xs rounded-xl shadow-md cursor-pointer mt-4"
@@ -238,7 +244,6 @@ export default function BrowseMarketplace() {
             </div>
           </div>
         )}
-
         <div className="lg:col-span-9 space-y-8">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -317,20 +322,27 @@ export default function BrowseMarketplace() {
                       </div>
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="p-1.5 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-600 hover:text-white text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer z-10 shrink-0"
+                      onClick={(e) => handleAddToCart(e, item)}
+                      disabled={addingId === item.id}
+                      className={`p-1.5 rounded-xl transition-colors cursor-pointer z-10 shrink-0 ${
+                        addedIds.includes(item.id)
+                          ? "bg-emerald-600 text-white"
+                          : "bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-600 hover:text-white text-neutral-800 dark:text-neutral-200"
+                      }`}
                     >
-                      <Plus className="w-4 h-4" />
+                      {addingId === item.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : addedIds.includes(item.id) ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </Link>
               ))}
             </div>
           )}
-
           {hasMore && (
             <div className="flex justify-center pt-4">
               <button

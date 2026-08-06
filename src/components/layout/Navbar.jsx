@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,17 +9,55 @@ import {
   Briefcase,
   PhoneCall,
   ArrowRight,
+  ShoppingCart,
+  LayoutDashboard,
+  User,
+  LogOut,
 } from "lucide-react";
 import { useMarketplace } from "@/context/MarketplaceContext";
+import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+
   const { searchQuery, setSearchQuery, products } = useMarketplace();
+  const { itemCount } = useCart(); // 🎯 DB synced cart count
+
   const searchRef = useRef(null);
   const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function getUser() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        if (data) setUserProfile(data);
+      }
+    }
+    getUser();
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      },
+    );
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -32,7 +69,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle Enter Key press in Search -> Redirects to Marketplace Filtered Route
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -43,6 +79,20 @@ export default function Navbar() {
       );
     }
   };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserProfile(null);
+    setIsMobileMenuOpen(false);
+    router.push("/");
+    router.refresh();
+  };
+
+  const dashboardPath =
+    userProfile?.role === "SUPPLIER"
+      ? "/supplier/dashboard"
+      : "/buyer/dashboard";
 
   return (
     <header className="sticky top-2 sm:top-4 z-50 w-full max-w-[1500px] mx-auto px-2 sm:px-6 md:px-7">
@@ -65,7 +115,6 @@ export default function Navbar() {
               Textil.
             </span>
           </Link>
-
           <div className="hidden lg:flex text-sm items-center gap-1 font-semibold text-neutral-600">
             <Link
               href="/marketplace"
@@ -106,10 +155,9 @@ export default function Navbar() {
                 setIsSearchFocused(true);
               }}
               onFocus={() => setIsSearchFocused(true)}
-              placeholder="Search fabrics, GSM, press Enter..."
-              className="w-full h-9 sm:h-10 pl-9 pr-8 rounded-full bg-[#F4F4F2] text-xs font-semibold text-neutral-900 placeholder:text-neutral-400 border border-black/5 focus:border-indigo-500/40 focus:bg-white focus:outline-none transition-all"
+              placeholder="Search fabrics..."
+              className="w-full h-9 sm:h-10 pl-9 pr-8 rounded-full bg-[#F4F4F2] text-xs font-semibold text-neutral-900 placeholder:text-neutral-400 border border-black/5 focus:border-black focus:bg-white focus:outline-none transition-all"
             />
-
             {searchQuery && (
               <button
                 type="button"
@@ -121,7 +169,7 @@ export default function Navbar() {
             )}
           </form>
 
-          {/* FLOATING DROPDOWN FOR SPECIFIC PRODUCT TAP */}
+          {/* SEARCH DROPDOWN */}
           <AnimatePresence>
             {isSearchFocused && searchQuery.trim().length > 0 && (
               <motion.div
@@ -137,19 +185,15 @@ export default function Navbar() {
                   </span>
                   <button
                     onClick={handleSearchSubmit}
-                    className="text-[10px] font-bold text-indigo-600 hover:underline"
+                    className="text-[10px] font-bold text-black hover:underline"
                   >
-                    View All in Marketplace →
+                    View All →
                   </button>
                 </div>
-
                 {products.length === 0 ? (
                   <div className="p-6 text-center space-y-1">
                     <p className="text-xs font-bold text-neutral-700">
                       No fabrics found
-                    </p>
-                    <p className="text-[11px] text-neutral-400">
-                      Press Enter to search entire catalog
                     </p>
                   </div>
                 ) : (
@@ -159,7 +203,7 @@ export default function Navbar() {
                         key={item.id}
                         href={`/product/${item.id}`}
                         onClick={() => setIsSearchFocused(false)}
-                        className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-neutral-50 border border-transparent hover:border-black/5 transition-all group"
+                        className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-neutral-50 transition-all group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <img
@@ -168,26 +212,10 @@ export default function Navbar() {
                             className="w-10 h-10 rounded-lg object-cover shrink-0 border border-black/5"
                           />
                           <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-neutral-900 group-hover:text-indigo-600 truncate">
+                            <h4 className="text-xs font-bold text-neutral-800 group-hover:text-black truncate">
                               {item.title}
                             </h4>
-                            <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 font-medium">
-                              <span className="bg-neutral-100 px-1.5 py-0.2 rounded font-bold text-neutral-600">
-                                {item.gsm} GSM
-                              </span>
-                              <span>•</span>
-                              <span className="truncate">{item.supplier}</span>
-                            </div>
                           </div>
-                        </div>
-
-                        <div className="text-right shrink-0">
-                          <span className="text-xs font-black text-neutral-900 block">
-                            ₹{item.price}
-                          </span>
-                          <span className="text-[9px] text-neutral-400">
-                            /meter
-                          </span>
                         </div>
                       </Link>
                     ))}
@@ -198,25 +226,67 @@ export default function Navbar() {
           </AnimatePresence>
         </div>
 
-        {/* RIGHT: ACTIONS */}
+        {/* RIGHT DESKTOP: CART & USER ACTIONS */}
         <div className="hidden sm:flex items-center gap-3 shrink-0">
           <Link
-            href="/register?role=supplier"
-            className="text-sm font-semibold text-neutral-600 hover:text-indigo-600 transition-colors px-2"
+            href="/cart"
+            className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-800"
           >
-            Become a Supplier
+            <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 size-4 bg-red-500 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
           </Link>
-
-          <Link
-            href="/login"
-            className="text-sm font-bold px-5 py-2 rounded-full bg-[#111111] text-white shadow-xs hover:bg-neutral-800 transition-colors"
-          >
-            Login
-          </Link>
+          {!user ? (
+            <>
+              <Link
+                href="/register?role=supplier"
+                className="text-sm font-semibold text-neutral-600 hover:text-black px-3 py-1.5 rounded-full hover:bg-neutral-100 transition-colors"
+              >
+                Become a Supplier
+              </Link>
+              <Link
+                href="/login"
+                className="text-sm font-bold px-5 py-2 rounded-full bg-[#111111] text-white shadow-xs hover:bg-neutral-800 transition-colors"
+              >
+                Login
+              </Link>
+            </>
+          ) : (
+            <Link
+              href={dashboardPath}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-all border border-black/5"
+            >
+              <div className="size-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
+                {userProfile?.avatar ? (
+                  <img
+                    src={userProfile.avatar}
+                    alt="Avatar"
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  userProfile?.fullName?.[0] || user.email?.[0] || "U"
+                )}
+              </div>
+              <span className="text-xs font-bold text-neutral-900 max-w-[100px] truncate">
+                {userProfile?.fullName?.split(" ")[0] || "Account"}
+              </span>
+            </Link>
+          )}
         </div>
 
-        {/* MOBILE MENU TOGGLE */}
-        <div className="flex items-center sm:hidden shrink-0">
+        {/* MOBILE ACTIONS */}
+        <div className="flex items-center sm:hidden shrink-0 gap-1.5">
+          <Link href="/cart" className="relative p-1.5 text-neutral-800">
+            <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 size-4 bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-1.5 rounded-full bg-[#F4F4F2] text-neutral-800 cursor-pointer"
@@ -229,14 +299,13 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* MOBILE DROPDOWN MENU */}
+        {/* COMPLETE MOBILE MENU DROPDOWN */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
               className="absolute top-16 left-0 right-0 bg-white border border-black/10 rounded-2xl shadow-xl p-4 sm:hidden z-50 space-y-3"
             >
               <div className="flex flex-col space-y-1">
@@ -246,51 +315,86 @@ export default function Navbar() {
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
                 >
                   <span className="flex items-center gap-2">
-                    <Store className="w-4 h-4 text-indigo-600" /> Marketplace
+                    <Store className="w-4 h-4 text-black" /> Marketplace
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                 </Link>
-
                 <Link
                   href="/supplier"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
                 >
                   <span className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-indigo-600" /> Suppliers
+                    <Briefcase className="w-4 h-4 text-black" /> Suppliers
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                 </Link>
-
                 <Link
                   href="#contact"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
                 >
                   <span className="flex items-center gap-2">
-                    <PhoneCall className="w-4 h-4 text-indigo-600" /> Contact Us
+                    <PhoneCall className="w-4 h-4 text-black" /> Contact Us
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                 </Link>
+
+                {/* 🎯 LOGGED IN MOBILE PROFILE LINK */}
+                {user && (
+                  <Link
+                    href={dashboardPath}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-100 font-bold text-xs text-neutral-900 mt-2"
+                  >
+                    <span className="flex items-center gap-2">
+                      <div className="size-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] uppercase overflow-hidden">
+                        {userProfile?.avatar ? (
+                          <img
+                            src={userProfile.avatar}
+                            alt="Avatar"
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          userProfile?.fullName?.[0] || user.email?.[0] || "U"
+                        )}
+                      </div>
+                      My Profile (
+                      {userProfile?.fullName?.split(" ")[0] || "Account"})
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 text-black" />
+                  </Link>
+                )}
               </div>
 
-              <div className="pt-2 border-t border-black/5 flex flex-col gap-2">
-                <Link
-                  href="/register?role=supplier"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl border border-black/10 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors"
-                >
-                  Become a Supplier
-                </Link>
-
-                <Link
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl bg-[#111111] text-xs font-bold text-white shadow-xs hover:bg-neutral-800 transition-colors"
-                >
-                  Login
-                </Link>
-              </div>
+              {!user ? (
+                <div className="pt-2 border-t border-black/5 flex flex-col gap-2">
+                  <Link
+                    href="/register?role=supplier"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 rounded-xl border border-black/10 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  >
+                    Become a Supplier
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 rounded-xl bg-[#111111] text-xs font-bold text-white shadow-xs"
+                  >
+                    Login
+                  </Link>
+                </div>
+              ) : (
+                /* 🎯 LOGOUT BUTTON FOR MOBILE */
+                <div className="pt-2 border-t border-black/5">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> Logout Account
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

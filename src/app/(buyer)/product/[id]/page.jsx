@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, use } from "react";
 import Navbar from "@/components/layout/Navbar";
 import {
@@ -12,10 +11,14 @@ import {
   MapPin,
   Lock,
   Box,
+  Check,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import RecommendedProducts from "@/components/product/RecommandedProduct";
+import { useCart } from "@/context/CartContext";
 
 // Color Shades with mapped images for interactive switching
 const SHADES = [
@@ -51,21 +54,17 @@ function ProductDetailSkeleton() {
         <div className="lg:col-span-6 flex gap-4">
           <div className="flex-1 h-[420px] rounded-2xl bg-neutral-200" />
         </div>
-
         {/* SPECS RIGHT */}
         <div className="lg:col-span-6 space-y-5">
           <div className="space-y-2">
             <div className="h-8 bg-neutral-200 rounded-lg w-3/4" />
             <div className="h-3 bg-neutral-200 rounded w-1/4" />
           </div>
-
           <div className="flex gap-2">
             <div className="h-4 bg-neutral-200 rounded w-1/3" />
             <div className="h-4 bg-neutral-200 rounded w-1/4" />
           </div>
-
           <div className="h-10 bg-neutral-200 rounded-xl w-1/2 pt-2" />
-
           <div className="space-y-2 pt-2">
             <div className="h-3 bg-neutral-200 rounded w-1/4" />
             <div className="flex gap-2.5">
@@ -74,19 +73,16 @@ function ProductDetailSkeleton() {
               ))}
             </div>
           </div>
-
           <div className="space-y-2 pt-2">
             <div className="h-3 bg-neutral-200 rounded w-1/4" />
             <div className="h-10 bg-neutral-200 rounded-xl w-2/3" />
           </div>
-
           <div className="grid grid-cols-2 gap-3 pt-4">
             <div className="h-12 bg-neutral-200 rounded-xl" />
             <div className="h-12 bg-neutral-200 rounded-xl" />
           </div>
         </div>
       </div>
-
       {/* HIGHLIGHTS BAR SKELETON */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-white rounded-2xl border border-black/5">
         {[...Array(4)].map((_, i) => (
@@ -99,7 +95,6 @@ function ProductDetailSkeleton() {
           </div>
         ))}
       </div>
-
       {/* TABS SKELETON */}
       <div className="bg-white p-6 rounded-3xl border border-black/5 space-y-4">
         <div className="flex gap-8 border-b border-black/5 pb-3">
@@ -120,6 +115,7 @@ function ProductDetailSkeleton() {
 export default function ProductDetailPage({ params }) {
   const resolvedParams = use(params);
   const productId = resolvedParams.id;
+  const router = useRouter();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -129,17 +125,20 @@ export default function ProductDetailPage({ params }) {
   const [activeTab, setActiveTab] = useState("Description");
   const [selectedShade, setSelectedShade] = useState(SHADES[0]);
 
+  // 🎯 CART STATES & CONTEXT
+  const [isAdding, setIsAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addToCart } = useCart();
+
   useEffect(() => {
     async function fetchProductById() {
       setLoading(true);
       try {
         const response = await axios.get(`/api/products/${productId}`);
         const data = response.data;
-
         if (data.success && data.product) {
           setProduct(data.product);
           setQuantity(data.product.moq || 800);
-
           const primaryImg = data.product.image || data.product.imageUrl;
           setSelectedImage(primaryImg || SHADES[0].img);
         } else {
@@ -152,7 +151,6 @@ export default function ProductDetailPage({ params }) {
         setLoading(false);
       }
     }
-
     if (productId) fetchProductById();
   }, [productId]);
 
@@ -160,6 +158,37 @@ export default function ProductDetailPage({ params }) {
   const handleShadeChange = (shade) => {
     setSelectedShade(shade);
     setSelectedImage(shade.img);
+  };
+
+  // 🎯 ADD TO CART HANDLER
+  const handleAddToCart = async () => {
+    if (!product) return;
+    setIsAdding(true);
+    const success = await addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: selectedImage || product.image,
+      quantity: quantity,
+    });
+    setIsAdding(false);
+    if (success) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
+  };
+
+  // 🎯 DIRECT PLACE ORDER HANDLER (ADD TO CART + CHECKOUT REDIRECT)
+  const handlePlaceOrder = async () => {
+    if (!product) return;
+    await addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: selectedImage || product.image,
+      quantity: quantity,
+    });
+    router.push("/checkout");
   };
 
   // RENDERS SKELETON WHILE LOADING
@@ -199,7 +228,6 @@ export default function ProductDetailPage({ params }) {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-neutral-900 font-sans">
       <Navbar />
-
       <main className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 space-y-12">
         {/* TOP PRODUCT SECTION */}
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-2xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -231,16 +259,7 @@ export default function ProductDetailPage({ params }) {
                 GSM: {product.gsm}
               </p>
             </div>
-
             <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600 font-medium pt-1">
-              {/* <div className="flex items-center gap-1 text-amber-500 font-bold">
-                <Star className="w-3.5 h-3.5 fill-amber-500" />
-                <span>4.8</span>
-                <span className="text-neutral-400 font-normal">
-                  (150 reviews)
-                </span>
-              </div>
-              <span>•</span> */}
               <span className="font-bold text-neutral-800">
                 {product.supplierName || product.supplier || "Verified Mill"}
               </span>
@@ -253,11 +272,10 @@ export default function ProductDetailPage({ params }) {
                 Supplier
               </div>
             </div>
-
             <div className="flex items-baseline gap-4 pt-2 border-t border-black/5">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-neutral-900">
-                  ${product.price}
+                  ₹{product.price}
                 </span>
                 <span className="text-sm text-neutral-500 font-bold">
                   /meter
@@ -315,22 +333,42 @@ export default function ProductDetailPage({ params }) {
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
-
                 <div className="text-xs font-bold text-neutral-500">
                   Total:{" "}
                   <span className="text-lg font-bold text-neutral-900">
-                    ${totalPrice}
+                    ₹{totalPrice}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-4">
-              <button className="py-3 rounded-xl border-2 border-black font-extrabold text-xs text-black hover:bg-neutral-100 transition-colors cursor-pointer">
-                Add to Cart
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className={`py-3 rounded-xl font-extrabold text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+                  added
+                    ? "bg-emerald-600 text-white"
+                    : "border-2 border-black text-black hover:bg-neutral-100"
+                }`}
+              >
+                {isAdding ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : added ? (
+                  <>
+                    <Check className="w-4 h-4" /> Added to Cart
+                  </>
+                ) : (
+                  "Add to Cart"
+                )}
               </button>
-              <button className="py-3 rounded-xl bg-[#4F46E5] font-extrabold text-xs text-white hover:bg-indigo-700 shadow-md transition-colors cursor-pointer">
-                Request Quote
+
+              {/* 🎯 BLACK PLACE ORDER BUTTON DIRECT TO CHECKOUT */}
+              <button
+                onClick={handlePlaceOrder}
+                className="py-3 rounded-xl bg-black font-extrabold text-xs text-white hover:bg-neutral-800 shadow-md transition-colors cursor-pointer"
+              >
+                Place Order
               </button>
             </div>
           </div>
@@ -351,7 +389,6 @@ export default function ProductDetailPage({ params }) {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="p-2 bg-neutral-100 rounded-xl">
               <Box className="w-5 h-5 text-neutral-700" />
@@ -365,7 +402,6 @@ export default function ProductDetailPage({ params }) {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="p-2 bg-neutral-100 rounded-xl">
               <Truck className="w-5 h-5 text-neutral-700" />
@@ -379,7 +415,6 @@ export default function ProductDetailPage({ params }) {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="p-2 bg-neutral-100 rounded-xl">
               <Lock className="w-5 h-5 text-neutral-700" />
@@ -414,7 +449,6 @@ export default function ProductDetailPage({ params }) {
               ),
             )}
           </div>
-
           <div className="text-sm text-neutral-600 leading-relaxed">
             {activeTab === "Description" && (
               <div className="space-y-4">
@@ -438,7 +472,6 @@ export default function ProductDetailPage({ params }) {
                 </ul>
               </div>
             )}
-
             {activeTab === "Specifications" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-3 rounded-xl bg-neutral-50 border border-black/5 space-y-1">
@@ -475,7 +508,6 @@ export default function ProductDetailPage({ params }) {
                 </div>
               </div>
             )}
-
             {activeTab === "Shipping" && (
               <div className="space-y-2">
                 <h4 className="font-bold md:text-lg text-neutral-900">
@@ -487,7 +519,6 @@ export default function ProductDetailPage({ params }) {
                 </p>
               </div>
             )}
-
             {activeTab === "Reviews (150)" && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -502,7 +533,6 @@ export default function ProductDetailPage({ params }) {
             )}
           </div>
         </div>
-
         {/* 🌟 REUSABLE RECOMMENDED PRODUCTS COMPONENT */}
         <RecommendedProducts
           material={product.material}

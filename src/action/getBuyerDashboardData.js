@@ -3,13 +3,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { profiles, buyerProfiles, products, productImages } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  profiles,
+  buyerProfiles,
+  products,
+  productImages,
+  orders,
+} from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export async function getBuyerDashboardData() {
   const supabase = await createClient();
 
-  // 1. Check Auth Session
+  // 1. Check Auth Session (Supabase User Fetch)
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -18,7 +24,7 @@ export async function getBuyerDashboardData() {
     redirect("/login");
   }
 
-  // 2. Database User Verification
+  // 2. Database Profile Verification
   const userProfile = await db
     .select()
     .from(profiles)
@@ -29,13 +35,13 @@ export async function getBuyerDashboardData() {
     redirect("/login");
   }
 
-  // 3. Fetch Buyer Specific Details
+  // 3. Fetch Buyer Profile Details
   const buyerDetails = await db
     .select()
     .from(buyerProfiles)
     .where(eq(buyerProfiles.profileId, user.id));
 
-  // 4. Fetch Products with Images for Marketplace Grid
+  // 4. Fetch Products Grid Data
   let catalogProducts = [];
   try {
     catalogProducts = await db
@@ -55,10 +61,24 @@ export async function getBuyerDashboardData() {
     console.error("Failed to fetch products:", err);
   }
 
+  // 5. Fetch Buyer Orders
+  let buyerOrdersList = [];
+  try {
+    buyerOrdersList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.profileId, user.id))
+      .orderBy(desc(orders.createdAt))
+      .limit(5);
+  } catch (err) {
+    console.error("Failed to fetch orders:", err);
+  }
+
   return {
-    user,
+    user, // Supabase Auth User (contains user.email)
     profile: userProfile[0],
     buyer: buyerDetails[0] || null,
-    products: catalogProducts || [],
+    catalogProducts: catalogProducts || [],
+    buyerOrders: buyerOrdersList || [],
   };
 }

@@ -11,17 +11,18 @@ export async function completeProfile(formData) {
 
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
+      console.error("Auth Error in completeProfile:", authError);
       return {
         success: false,
-        message: "Unauthorized",
+        message: "Unauthorized - Please login again",
       };
     }
 
     const role = formData.get("role");
-    // Extract phone number from form data or user metadata
     const phone =
       formData.get("phone") ||
       formData.get("contactNumber") ||
@@ -32,21 +33,21 @@ export async function completeProfile(formData) {
     await db
       .update(profiles)
       .set({
-        role,
+        role: role,
         phone: phone,
         updatedAt: new Date(),
       })
       .where(eq(profiles.id, user.id));
 
-    // 2. HANDLE BUYER PROFILE (UPSERT LOGIC)
+    // 2. HANDLE BUYER PROFILE
     if (role === "BUYER") {
       const buyerData = {
         profileId: user.id,
-        businessType: formData.get("businessType"),
-        industry: formData.get("industry"),
-        preferredFabric: formData.get("preferredFabric"),
+        businessType: formData.get("businessType") || "Garment Manufacturer",
+        industry: formData.get("industry") || "Apparel & Fashion",
+        preferredFabric: formData.get("preferredFabric") || "Cotton",
         typicalOrderQuantity: Number(formData.get("typicalOrderQuantity")) || 0,
-        budgetRange: formData.get("budgetRange"),
+        budgetRange: formData.get("budgetRange") || "$2,000 - $10,000",
         updatedAt: new Date(),
       };
 
@@ -55,7 +56,7 @@ export async function completeProfile(formData) {
         .from(buyerProfiles)
         .where(eq(buyerProfiles.profileId, user.id));
 
-      if (existingBuyer.length > 0) {
+      if (existingBuyer && existingBuyer.length > 0) {
         await db
           .update(buyerProfiles)
           .set(buyerData)
@@ -66,46 +67,53 @@ export async function completeProfile(formData) {
 
       return {
         success: true,
-        redirectTo: "/buyer/dashboard",
+        redirectTo: "/", // BUYER HOME
       };
     }
 
-    // 3. HANDLE SUPPLIER PROFILE (UPSERT LOGIC)
-    const supplierData = {
-      profileId: user.id,
-      businessName: formData.get("businessName"),
-      businessType: formData.get("businessType"),
-      contactNumber: formData.get("contactNumber"),
-      businessAddress: formData.get("businessAddress"),
-      operatingHours: formData.get("operatingHours"),
-      fabricsOffered: formData.get("fabricsOffered"),
-      minimumOrderQuantity: Number(formData.get("minimumOrderQuantity")) || 0,
-      updatedAt: new Date(),
-    };
+    // 3. HANDLE SUPPLIER PROFILE
+    if (role === "SUPPLIER") {
+      const supplierData = {
+        profileId: user.id,
+        businessName: formData.get("businessName") || "Textile Business",
+        businessType: formData.get("businessType") || "Mill",
+        contactNumber: formData.get("contactNumber") || "",
+        businessAddress: formData.get("businessAddress") || "",
+        operatingHours: formData.get("operatingHours") || "",
+        fabricsOffered: formData.get("fabricsOffered") || "",
+        minimumOrderQuantity: Number(formData.get("minimumOrderQuantity")) || 0,
+        updatedAt: new Date(),
+      };
 
-    const existingSupplier = await db
-      .select()
-      .from(supplierProfiles)
-      .where(eq(supplierProfiles.profileId, user.id));
-
-    if (existingSupplier.length > 0) {
-      await db
-        .update(supplierProfiles)
-        .set(supplierData)
+      const existingSupplier = await db
+        .select()
+        .from(supplierProfiles)
         .where(eq(supplierProfiles.profileId, user.id));
-    } else {
-      await db.insert(supplierProfiles).values(supplierData);
+
+      if (existingSupplier && existingSupplier.length > 0) {
+        await db
+          .update(supplierProfiles)
+          .set(supplierData)
+          .where(eq(supplierProfiles.profileId, user.id));
+      } else {
+        await db.insert(supplierProfiles).values(supplierData);
+      }
+
+      return {
+        success: true,
+        redirectTo: "/supplier/dashboard", // SUPPLIER DASHBOARD
+      };
     }
 
     return {
-      success: true,
-      redirectTo: "/supplier/dashboard",
+      success: false,
+      message: "Invalid Role Selected",
     };
   } catch (error) {
-    console.error("completeProfile Error:", error);
+    console.error("completeProfile Execution Error:", error);
     return {
       success: false,
-      message: error.message || "Something went wrong",
+      message: error.message || "Failed to complete onboarding",
     };
   }
 }

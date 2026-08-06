@@ -22,7 +22,6 @@ export async function GET(request) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Safe Query using select directly
   const existingProfiles = await db
     .select()
     .from(profiles)
@@ -53,5 +52,5 @@ export async function GET(request) {
     return NextResponse.redirect(new URL("/supplier/dashboard", request.url));
   }
 
-  return NextResponse.redirect(new URL("/buyer/dashboard", request.url));
+  return NextResponse.redirect(new URL("/", request.url));
 }
