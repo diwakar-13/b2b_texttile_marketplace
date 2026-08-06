@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, use } from "react";
 import Navbar from "@/components/layout/Navbar";
 import {
@@ -13,36 +14,13 @@ import {
   Box,
   Check,
   Loader2,
+  ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import RecommendedProducts from "@/components/product/RecommandedProduct";
 import { useCart } from "@/context/CartContext";
-
-// Color Shades with mapped images for interactive switching
-const SHADES = [
-  {
-    name: "Natural Beige",
-    hex: "#D1C7BD",
-    img: "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600",
-  },
-  {
-    name: "Sand Taupe",
-    hex: "#B8A99A",
-    img: "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=600",
-  },
-  {
-    name: "Soft Ivory",
-    hex: "#E5DEC9",
-    img: "https://images.unsplash.com/photo-1563212048-a006ee787e93?q=80&w=600",
-  },
-  {
-    name: "Earth Brown",
-    hex: "#4A3E3D",
-    img: "https://images.unsplash.com/photo-1528458876861-544fd1761a91?q=80&w=600",
-  },
-];
 
 // 💀 SKELETON COMPONENT FOR PRODUCT DETAIL PAGE
 function ProductDetailSkeleton() {
@@ -65,14 +43,6 @@ function ProductDetailSkeleton() {
             <div className="h-4 bg-neutral-200 rounded w-1/4" />
           </div>
           <div className="h-10 bg-neutral-200 rounded-xl w-1/2 pt-2" />
-          <div className="space-y-2 pt-2">
-            <div className="h-3 bg-neutral-200 rounded w-1/4" />
-            <div className="flex gap-2.5">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-8 h-8 rounded-lg bg-neutral-200" />
-              ))}
-            </div>
-          </div>
           <div className="space-y-2 pt-2">
             <div className="h-3 bg-neutral-200 rounded w-1/4" />
             <div className="h-10 bg-neutral-200 rounded-xl w-2/3" />
@@ -123,9 +93,8 @@ export default function ProductDetailPage({ params }) {
   const [quantity, setQuantity] = useState(800);
   const [selectedImage, setSelectedImage] = useState("");
   const [activeTab, setActiveTab] = useState("Description");
-  const [selectedShade, setSelectedShade] = useState(SHADES[0]);
 
-  // 🎯 CART STATES & CONTEXT
+  // CART STATES & CONTEXT
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
@@ -139,8 +108,11 @@ export default function ProductDetailPage({ params }) {
         if (data.success && data.product) {
           setProduct(data.product);
           setQuantity(data.product.moq || 800);
-          const primaryImg = data.product.image || data.product.imageUrl;
-          setSelectedImage(primaryImg || SHADES[0].img);
+          const primaryImg =
+            data.product.image ||
+            data.product.imageUrl ||
+            (data.product.images && data.product.images[0]?.imageUrl);
+          setSelectedImage(primaryImg || "");
         } else {
           setError(data.message || "Product not found");
         }
@@ -154,21 +126,15 @@ export default function ProductDetailPage({ params }) {
     if (productId) fetchProductById();
   }, [productId]);
 
-  // Color click shade switcher handler
-  const handleShadeChange = (shade) => {
-    setSelectedShade(shade);
-    setSelectedImage(shade.img);
-  };
-
-  // 🎯 ADD TO CART HANDLER
+  // ADD TO CART HANDLER
   const handleAddToCart = async () => {
     if (!product) return;
     setIsAdding(true);
     const success = await addToCart({
       id: product.id,
-      title: product.title,
+      title: product.title || product.name,
       price: product.price,
-      image: selectedImage || product.image,
+      image: selectedImage || product.image || product.imageUrl,
       quantity: quantity,
     });
     setIsAdding(false);
@@ -178,20 +144,19 @@ export default function ProductDetailPage({ params }) {
     }
   };
 
-  // 🎯 DIRECT PLACE ORDER HANDLER (ADD TO CART + CHECKOUT REDIRECT)
+  // DIRECT PLACE ORDER HANDLER
   const handlePlaceOrder = async () => {
     if (!product) return;
     await addToCart({
       id: product.id,
-      title: product.title,
+      title: product.title || product.name,
       price: product.price,
-      image: selectedImage || product.image,
+      image: selectedImage || product.image || product.imageUrl,
       quantity: quantity,
     });
     router.push("/checkout");
   };
 
-  // RENDERS SKELETON WHILE LOADING
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FA]">
@@ -233,45 +198,49 @@ export default function ProductDetailPage({ params }) {
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-2xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* GALLERY LEFT */}
           <div className="lg:col-span-6 flex gap-4">
-            <div className="flex-1 h-[420px] rounded-xl overflow-hidden bg-neutral-100 border border-black/5 relative">
-              <img
-                src={selectedImage}
-                alt={product.title}
-                className="w-full h-full object-cover transition-all duration-300"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600";
-                }}
-              />
-              <span className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                Shade: {selectedShade.name}
-              </span>
+            <div className="flex-1 h-[420px] rounded-xl overflow-hidden bg-neutral-100 border border-black/5 relative flex items-center justify-center">
+              {selectedImage ? (
+                <img
+                  src={selectedImage}
+                  alt={product.title || product.name}
+                  className="w-full h-full object-cover transition-all duration-300"
+                />
+              ) : (
+                <div className="text-center text-neutral-400 space-y-1">
+                  <ImageIcon className="w-10 h-10 mx-auto" />
+                  <span className="text-xs font-bold block">
+                    No Image Available
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* PRODUCT SPECS RIGHT */}
           <div className="lg:col-span-6 space-y-5">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 ">
-                {product.title}
+              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">
+                {product.title || product.name}
               </h1>
-              <p className=" text-sm text-neutral-500 font-semibold mt-1">
-                GSM: {product.gsm}
+              <p className="text-sm text-neutral-500 font-semibold mt-1">
+                GSM: {product.gsm || "N/A"}
               </p>
             </div>
+
             <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600 font-medium pt-1">
               <span className="font-bold text-neutral-800">
                 {product.supplierName || product.supplier || "Verified Mill"}
               </span>
               <span>•</span>
               <div className="flex items-center gap-1 text-neutral-500">
-                <MapPin className="w-3 h-3 text-black" /> India
+                <MapPin className="w-3.5 h-3.5 text-black" /> India
               </div>
               <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold text-[12px]">
-                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified
-                Supplier
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{" "}
+                Verified Supplier
               </div>
             </div>
+
             <div className="flex items-baseline gap-4 pt-2 border-t border-black/5">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-neutral-900">
@@ -284,30 +253,6 @@ export default function ProductDetailPage({ params }) {
               <span className="text-sm font-bold text-neutral-500">
                 MOQ {product.moq || 800} meters
               </span>
-            </div>
-
-            {/* WORKING SHADE COLOR SWITCHER */}
-            <div className="space-y-2 pt-2">
-              <span className="text-xs font-bold text-neutral-600 block">
-                Color Shade:{" "}
-                <span className="text-indigo-600 font-extrabold">
-                  {selectedShade.name}
-                </span>
-              </span>
-              <div className="flex items-center gap-2.5">
-                {SHADES.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleShadeChange(s)}
-                    style={{ backgroundColor: s.hex }}
-                    className={`w-8 h-8 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedShade.name === s.name
-                        ? "border-black scale-110 shadow-md ring-2 ring-indigo-500/20"
-                        : "border-transparent hover:scale-105 opacity-80 hover:opacity-100"
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
 
             {/* QUANTITY COUNTER */}
@@ -342,6 +287,7 @@ export default function ProductDetailPage({ params }) {
               </div>
             </div>
 
+            {/* BUTTONS */}
             <div className="grid grid-cols-2 gap-3 pt-4">
               <button
                 onClick={handleAddToCart}
@@ -363,7 +309,6 @@ export default function ProductDetailPage({ params }) {
                 )}
               </button>
 
-              {/* 🎯 BLACK PLACE ORDER BUTTON DIRECT TO CHECKOUT */}
               <button
                 onClick={handlePlaceOrder}
                 className="py-3 rounded-xl bg-black font-extrabold text-xs text-white hover:bg-neutral-800 shadow-md transition-colors cursor-pointer"
@@ -454,16 +399,12 @@ export default function ProductDetailPage({ params }) {
               <div className="space-y-4">
                 <p>
                   {product.description ||
-                    `Our ${product.title} is crafted with precision to deliver exceptional softness, durability, and breathability.`}
+                    `Our ${product.title || product.name} is crafted with precision to deliver exceptional softness, durability, and breathability.`}
                 </p>
-                <ul className="list-disc pl-4 space-y-1  text-neutral-700">
+                <ul className="list-disc pl-4 space-y-1 text-neutral-700">
                   <li>
                     <span className="font-bold">Composition: </span>
                     {product.composition || "100% Certified Organic"}
-                  </li>
-                  <li>
-                    <span className="font-bold">Selected Shade: </span>
-                    {selectedShade.name}
                   </li>
                   <li className="font-medium">
                     High tensile strength and tear resistance
@@ -533,7 +474,8 @@ export default function ProductDetailPage({ params }) {
             )}
           </div>
         </div>
-        {/* 🌟 REUSABLE RECOMMENDED PRODUCTS COMPONENT */}
+
+        {/* REUSABLE RECOMMENDED PRODUCTS COMPONENT */}
         <RecommendedProducts
           material={product.material}
           currentProductId={product.id}
