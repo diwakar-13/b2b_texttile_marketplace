@@ -109,7 +109,6 @@ export default function OnboardingPage() {
     }
   };
 
-  // 🔴 FIXED HERE: Changed 8 to 5 because Supplier flow has 5 steps
   const handleNextSupplierStep = () => {
     if (supplierStep < 5) {
       setSupplierStep((prev) => prev + 1);
@@ -151,16 +150,18 @@ export default function OnboardingPage() {
     localStorage.removeItem("textil_buyer_form");
     localStorage.removeItem("textil_supplier_form");
 
+    // 🎯 FIX HERE: Dynamic redirection route from Server Action response
+    const targetRoute =
+      res?.redirectTo || (role === "SUPPLIER" ? "/supplier/dashboard" : "/");
+
     if (res?.success) {
-      router.push(
-        role === "SUPPLIER" ? "/supplier/dashboard" : "/buyer/dashboard",
-      );
+      router.push(targetRoute);
+      router.refresh();
     } else {
       setLoading(false);
       alert(res?.message || "Profile completed!");
-      router.push(
-        role === "SUPPLIER" ? "/supplier/dashboard" : "/buyer/dashboard",
-      );
+      router.push(targetRoute);
+      router.refresh();
     }
   }
 

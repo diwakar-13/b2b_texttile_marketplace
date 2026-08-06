@@ -54,7 +54,6 @@ export async function login(formData) {
 
   return {
     success: true,
-    redirectTo:
-      profile.role === "SUPPLIER" ? "/supplier/dashboard" : "/buyer/dashboard",
+    redirectTo: profile.role === "SUPPLIER" ? "/supplier/dashboard" : "/",
   };
 }

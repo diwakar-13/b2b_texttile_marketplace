@@ -413,13 +413,13 @@ export default function BuyerOnboarding({
                 setRole(null);
               }
             }}
-            className="px-8 h-11 bg-neutral-100 text-neutral-700 font-bold rounded-xl hover:bg-neutral-200 transition-colors cursor-pointer"
+            className="px-8 h-11 bg-neutral-100 text-neutral-700 font-bold rounded-xl hover:bg-neutral-200 transition-colors cursor-pointer text-xs md:text-md"
           >
             Back
           </button>
 
           <div className="flex items-center gap-4">
-            <span className="font-bold text-neutral-500 text-sm">
+            <span className="font-bold text-neutral-500 text-xs md:text-sm ">
               Step {buyerStep} of 7
             </span>
             <button
@@ -435,7 +435,7 @@ export default function BuyerOnboarding({
                 </>
               ) : buyerStep === 7 ? (
                 <>
-                  Finish & Open Dashboard <FiArrowRight />
+                  Finish <FiArrowRight />
                 </>
               ) : (
                 <>

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { OfferCarousel } from "../ui/Textile-corousal";
 
-// Skeleton Loader for Carousel Loading State
 function FeaturedCarouselSkeleton() {
   return (
     <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 md:px-7 py-6 space-y-5 animate-pulse">
@@ -38,20 +38,18 @@ function FeaturedCarouselSkeleton() {
 export default function OfferCarouselDemo() {
   const [featuredTextile, setFeaturedTextile] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchAllCategoryFeaturedProducts() {
       setLoading(true);
       try {
-        // Multi-category DB fetch (Cotton, Denim, Silk, Linen etc.)
         const res = await axios.get("/api/products", {
-          params: { limit: 12 }, // Higher limit to include all categories from DB
+          params: { limit: 12 },
         });
 
         if (res.data.success && res.data.products) {
-          // Normalize DB items into Carousel compatible format
           const formatted = res.data.products.map((item) => {
-            // Material badge assignment
             let badgeTag = "Featured";
             if (item.material?.toLowerCase().includes("denim"))
               badgeTag = "Denim Premium";
@@ -70,7 +68,7 @@ export default function OfferCarouselDemo() {
                 "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600",
               title: item.title || item.name,
               gsm: item.gsm,
-              price: `$${item.price}`,
+              price: `₹${item.price}`,
               moq: item.moq,
               supplier: item.supplier || item.supplierName || "Verified Mill",
               rating: 4.8,
@@ -82,10 +80,7 @@ export default function OfferCarouselDemo() {
           setFeaturedTextile(formatted);
         }
       } catch (error) {
-        console.error(
-          "Error fetching multi-category featured products:",
-          error,
-        );
+        console.error("Error fetching featured products:", error);
       } finally {
         setLoading(false);
       }
@@ -93,6 +88,12 @@ export default function OfferCarouselDemo() {
 
     fetchAllCategoryFeaturedProducts();
   }, []);
+
+  const handleItemClick = (offer) => {
+    if (offer?.id) {
+      router.push(`/product/${offer.id}`);
+    }
+  };
 
   if (loading) {
     return <FeaturedCarouselSkeleton />;
@@ -112,7 +113,7 @@ export default function OfferCarouselDemo() {
         </a>
       </div>
 
-      <OfferCarousel offers={featuredTextile} />
+      <OfferCarousel offers={featuredTextile} onItemClick={handleItemClick} />
     </div>
   );
 }
