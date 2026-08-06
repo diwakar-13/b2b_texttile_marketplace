@@ -22,22 +22,30 @@ export async function GET(request) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, user.id),
-  });
+  // Safe Query using select directly
+  const existingProfiles = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, user.id));
+
+  let profile = existingProfiles[0];
 
   if (!profile) {
-    await db.insert(profiles).values({
-      id: user.id,
-      fullName: user.user_metadata?.full_name || user.user_metadata?.name || "",
-      email: user.email,
-      avatar: user.user_metadata?.avatar_url || null,
-    });
+    const newProfile = await db
+      .insert(profiles)
+      .values({
+        id: user.id,
+        fullName:
+          user.user_metadata?.full_name || user.user_metadata?.name || "",
+        email: user.email,
+        avatar: user.user_metadata?.avatar_url || null,
+      })
+      .returning();
 
-    return NextResponse.redirect(new URL("/complete-profile", request.url));
+    profile = newProfile[0];
   }
 
-  if (!profile.role) {
+  if (!profile?.role) {
     return NextResponse.redirect(new URL("/complete-profile", request.url));
   }
 
