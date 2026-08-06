@@ -11,7 +11,7 @@ import SupplierOnboarding from "./SupplierOnboarding";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [role, setRole] = useState(null); // 'BUYER' | 'SUPPLIER'
+  const [role, setRole] = useState(null);
   const [buyerStep, setBuyerStep] = useState(1);
   const [supplierStep, setSupplierStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,6 @@ export default function OnboardingPage() {
     moq: "500",
   });
 
-  // RESTORE STATE ON REFRESH
   useEffect(() => {
     const savedRole = localStorage.getItem("textil_onboarding_role");
     const savedBuyerStep = localStorage.getItem("textil_buyer_step");
@@ -62,7 +61,6 @@ export default function OnboardingPage() {
     }
   }, []);
 
-  // AUTO-SAVE STATE ON CHANGES
   useEffect(() => {
     if (role) localStorage.setItem("textil_onboarding_role", role);
     localStorage.setItem("textil_buyer_step", buyerStep.toString());
@@ -119,55 +117,58 @@ export default function OnboardingPage() {
 
   async function handleFinalSubmit() {
     setLoading(true);
-    const formData = new FormData();
-    formData.append("role", role);
+    try {
+      const formData = new FormData();
+      formData.append("role", role);
 
-    if (role === "BUYER") {
-      formData.append("businessType", buyerForm.businessType);
-      formData.append("industry", buyerForm.industry);
-      formData.append(
-        "preferredFabric",
-        buyerForm.preferredFabric || buyerForm.categories.join(", "),
-      );
-      formData.append("typicalOrderQuantity", buyerForm.typicalMOQ);
-      formData.append("budgetRange", buyerForm.budgetRange);
-    } else {
-      formData.append("businessName", supplierForm.businessName);
-      formData.append("businessType", supplierForm.businessType);
-      formData.append("contactNumber", supplierForm.contactNumber);
-      formData.append("businessAddress", supplierForm.businessAddress);
-      formData.append("operatingHours", supplierForm.operatingHours);
-      formData.append("fabricsOffered", supplierForm.fabricsOffered);
-      formData.append("minimumOrderQuantity", supplierForm.moq);
-    }
+      if (role === "BUYER") {
+        formData.append("businessType", buyerForm.businessType);
+        formData.append("industry", buyerForm.industry);
+        formData.append(
+          "preferredFabric",
+          buyerForm.preferredFabric || buyerForm.categories.join(", "),
+        );
+        formData.append("typicalOrderQuantity", buyerForm.typicalMOQ);
+        formData.append("budgetRange", buyerForm.budgetRange);
+      } else {
+        formData.append("businessName", supplierForm.businessName);
+        formData.append("businessType", supplierForm.businessType);
+        formData.append("contactNumber", supplierForm.contactNumber);
+        formData.append("businessAddress", supplierForm.businessAddress);
+        formData.append("operatingHours", supplierForm.operatingHours);
+        formData.append("fabricsOffered", supplierForm.fabricsOffered);
+        formData.append("minimumOrderQuantity", supplierForm.moq);
+      }
 
-    const res = await completeProfile(formData);
+      const res = await completeProfile(formData);
 
-    // Clear local storage
-    localStorage.removeItem("textil_onboarding_role");
-    localStorage.removeItem("textil_buyer_step");
-    localStorage.removeItem("textil_supplier_step");
-    localStorage.removeItem("textil_buyer_form");
-    localStorage.removeItem("textil_supplier_form");
+      // Clear local storage
+      localStorage.removeItem("textil_onboarding_role");
+      localStorage.removeItem("textil_buyer_step");
+      localStorage.removeItem("textil_supplier_step");
+      localStorage.removeItem("textil_buyer_form");
+      localStorage.removeItem("textil_supplier_form");
 
-    // 🎯 FIX HERE: Dynamic redirection route from Server Action response
-    const targetRoute =
-      res?.redirectTo || (role === "SUPPLIER" ? "/supplier/dashboard" : "/");
+      const targetRoute =
+        res?.redirectTo ||
+        (role === "SUPPLIER" ? "/supplier/dashboard" : "/buyer/dashboard");
 
-    if (res?.success) {
-      router.push(targetRoute);
-      router.refresh();
-    } else {
+      if (res?.success) {
+        // 🎯 INSTANT FULL BROWSER REDIRECTION TO PREVENT INFINITE LOADING
+        window.location.href = targetRoute;
+      } else {
+        setLoading(false);
+        alert(res?.message || "Profile update error!");
+      }
+    } catch (error) {
+      console.error("Submission Error:", error);
       setLoading(false);
-      alert(res?.message || "Profile completed!");
-      router.push(targetRoute);
-      router.refresh();
+      alert("Something went wrong. Please try again.");
     }
   }
 
   return (
     <div className="relative min-h-screen w-full flex flex-col justify-between p-4 sm:p-8 font-sans overflow-hidden bg-neutral-900">
-      {/* BACKGROUND IMAGE */}
       <Image
         src="/cat_silk.jpg"
         alt="Silk Fabric Texture Background"
@@ -180,7 +181,6 @@ export default function OnboardingPage() {
 
       <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px] z-10" />
 
-      {/* HEADER LOGO */}
       <header className="relative z-20 w-full max-w-[1300px] mx-auto flex items-center justify-between py-2">
         <Link
           href="/"
@@ -194,9 +194,7 @@ export default function OnboardingPage() {
         </span>
       </header>
 
-      {/* MAIN CONTAINER */}
       <main className="relative z-20 w-full max-w-[1280px] mx-auto my-auto py-4">
-        {/* ROLE SELECTION CARD */}
         {!role && (
           <div className="w-full max-w-md mx-auto bg-white/95 backdrop-blur-xl rounded-[32px] p-8 border border-white/40 shadow-[0_25px_60px_rgba(0,0,0,0.25)] transition-all duration-500 hover:scale-[1.01]">
             <div className="text-center space-y-2 mb-8">
@@ -260,7 +258,6 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* BUYER COMPONENT */}
         {role === "BUYER" && (
           <BuyerOnboarding
             buyerStep={buyerStep}
@@ -276,7 +273,6 @@ export default function OnboardingPage() {
           />
         )}
 
-        {/* SUPPLIER COMPONENT */}
         {role === "SUPPLIER" && (
           <SupplierOnboarding
             supplierStep={supplierStep}
@@ -290,7 +286,6 @@ export default function OnboardingPage() {
         )}
       </main>
 
-      {/* FOOTER */}
       <footer className="relative z-20 text-center text-[11px] font-bold text-white/60 py-2">
         Textil B2B Ecosystem © 2026
       </footer>

@@ -14,33 +14,64 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { LayoutDashboard, User, ShoppingBag } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  Store,
+  User,
+} from "lucide-react";
 
-export function AppSidebar({ userProfile, userEmail, ...props }) {
+export function AppSidebar({
+  userProfile,
+  userEmail,
+  role = "BUYER",
+  ...props
+}) {
+  const isSupplier = role === "SUPPLIER";
+
   const data = {
     user: {
-      name: userProfile?.fullName || "Buyer",
-      email: userEmail || "buyer@textil.com",
+      name: userProfile?.fullName || (isSupplier ? "Supplier" : "Buyer"),
+      email: userEmail || "user@textil.com",
       avatar: userProfile?.avatar || "",
+      role: role,
     },
-    navMain: [
-      {
-        title: "Dashboard",
-        url: "/buyer/dashboard",
-        icon: LayoutDashboard,
-        isActive: true,
-      },
-      {
-        title: "My Orders & Tracking",
-        url: "/buyer/orders",
-        icon: ShoppingBag,
-      },
-    ],
+    navMain: isSupplier
+      ? [
+          {
+            title: "Supplier Dashboard",
+            url: "/supplier/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            title: "Inventory & Catalog",
+            url: "/supplier/inventory",
+            icon: Package,
+          },
+          {
+            title: "Incoming Orders",
+            url: "/supplier/orders",
+            icon: ShoppingBag,
+          },
+        ]
+      : [
+          {
+            title: "Dashboard",
+            url: "/buyer/dashboard",
+            icon: LayoutDashboard,
+          },
+          {
+            title: "My Orders & Tracking",
+            url: "/buyer/orders",
+            icon: ShoppingBag,
+          },
+        ],
   };
 
   return (
-    <Sidebar variant="inset" {...props}>
-      <SidebarHeader>
+    <Sidebar variant="inset" className="bg-white" {...props}>
+      <SidebarHeader className="bg-white">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="hover:bg-neutral-100">
@@ -52,8 +83,10 @@ export function AppSidebar({ userProfile, userEmail, ...props }) {
                   <span className="truncate font-bold text-neutral-900">
                     Textil.
                   </span>
-                  <span className="truncate text-neutral-500 text-xs ">
-                    A B2B Textile Marketplace
+                  <span className="truncate text-neutral-500 text-xs">
+                    {isSupplier
+                      ? "Supplier Portal"
+                      : "A B2B Textile Marketplace"}
                   </span>
                 </div>
               </Link>
@@ -62,11 +95,11 @@ export function AppSidebar({ userProfile, userEmail, ...props }) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-white">
         <NavMain items={data.navMain} />
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="bg-white">
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>

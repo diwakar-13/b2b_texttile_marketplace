@@ -161,7 +161,7 @@ export default function SupplierOnboarding({
               </p>
               <div className="space-y-3 pt-2">
                 <div>
-                  <label className="text-sm font-bold text-neutral-700">
+                  <label className="text-sm md:text-lg font-bold text-neutral-700">
                     Business / Mill Name
                   </label>
                   <input
@@ -180,7 +180,7 @@ export default function SupplierOnboarding({
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-neutral-700">
+                  <label className="text-sm md:text-lg font-bold text-neutral-700">
                     Business Type
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
@@ -207,7 +207,7 @@ export default function SupplierOnboarding({
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-neutral-700">
+                  <label className="text-sm md:text-lg font-bold text-neutral-700">
                     Contact Number
                   </label>
                   <input

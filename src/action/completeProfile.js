@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { profiles, buyerProfiles, supplierProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export async function completeProfile(formData) {
   try {
@@ -65,9 +66,10 @@ export async function completeProfile(formData) {
         await db.insert(buyerProfiles).values(buyerData);
       }
 
+      revalidatePath("/buyer/dashboard");
       return {
         success: true,
-        redirectTo: "/", // BUYER HOME
+        redirectTo: "/buyer/dashboard",
       };
     }
 
@@ -99,9 +101,10 @@ export async function completeProfile(formData) {
         await db.insert(supplierProfiles).values(supplierData);
       }
 
+      revalidatePath("/supplier/dashboard");
       return {
         success: true,
-        redirectTo: "/supplier/dashboard", // SUPPLIER DASHBOARD
+        redirectTo: "/supplier/dashboard",
       };
     }
 

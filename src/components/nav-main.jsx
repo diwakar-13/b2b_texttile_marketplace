@@ -15,11 +15,10 @@ export function NavMain({ items }) {
 
   return (
     <SidebarGroup>
-      <SidebarMenu>
+      <SidebarMenu className="space-y-1">
         {items?.map((item) => {
           const IconComponent = item.icon;
 
-          // Check if current route matches the item URL or anchor
           const isActive =
             pathname === item.url ||
             (item.url.startsWith("#") &&
@@ -27,14 +26,14 @@ export function NavMain({ items }) {
               window.location.hash === item.url);
 
           return (
-            <SidebarMenuItem key={item.title} >
+            <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 tooltip={item.title}
                 isActive={isActive}
-                className={`transition-colors duration-150   ${
+                className={`transition-colors duration-150 ${
                   isActive
-                    ? "bg-neutral-300 text-black font-bold"
-                    : "hover:bg-neutral-200 text-neutral-700"
+                    ? "bg-neutral-200 text-black font-bold"
+                    : "hover:bg-neutral-100 text-neutral-700"
                 }`}
               >
                 <Link
@@ -46,10 +45,12 @@ export function NavMain({ items }) {
                   ) : typeof IconComponent === "function" ||
                     typeof IconComponent === "object" ? (
                     <IconComponent
-                      className={`size-4 shrink-0 ${isActive ? "text-black" : "text-neutral-500"}`}
+                      className={`size-4 shrink-0 ${
+                        isActive ? "text-black" : "text-neutral-500"
+                      }`}
                     />
                   ) : null}
-                  <span className="font-medium">{item.title}</span>
+                  <span className="font-medium text-xs">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

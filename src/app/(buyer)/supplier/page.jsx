@@ -101,7 +101,7 @@ export default function SuppliersPage() {
         </h3>
         <button
           onClick={resetFilters}
-          className="text-[12px] font-semibold text-indigo-600 flex items-center gap-1 hover:underline cursor-pointer"
+          className="text-[12px] font-semibold text-black flex items-center gap-1 hover:underline cursor-pointer"
         >
           <RotateCcw className="w-3 h-3" /> Clear all
         </button>
@@ -109,7 +109,7 @@ export default function SuppliersPage() {
 
       <div className="space-y-2 pt-2">
         <label className="text-sm font-bold text-neutral-700 flex items-center gap-1.5">
-          <Building2 className="w-3.5 h-3.5 text-indigo-500" /> Business Type
+          <Building2 className="w-3.5 h-3.5 text-black" /> Business Type
         </label>
         <div className="flex flex-wrap gap-1.5 pt-1">
           {BUSINESS_TYPES.map((type) => (
@@ -130,7 +130,7 @@ export default function SuppliersPage() {
 
       <div className="space-y-2 pt-3 border-t border-black/5">
         <label className="text-sm font-bold text-neutral-700 flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-indigo-500" /> Fabrics Offered
+          <Layers className="w-3.5 h-3.5 text-black" /> Fabrics Offered
         </label>
         <select
           value={selectedFabric}
@@ -147,7 +147,7 @@ export default function SuppliersPage() {
 
       <div className="space-y-2 pt-3 border-t border-black/5">
         <label className="text-sm font-bold text-neutral-700 flex items-center gap-1.5">
-          <Globe2 className="w-3.5 h-3.5 text-indigo-500" /> Country / Region
+          <Globe2 className="w-3.5 h-3.5 text-black" /> Country / Region
         </label>
         <select
           value={selectedCountry}
@@ -262,7 +262,7 @@ export default function SuppliersPage() {
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-black hover:underline cursor-pointer"
                 >
                   Reset All Filters
                 </button>

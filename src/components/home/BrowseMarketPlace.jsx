@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -13,6 +13,8 @@ import {
   Layers,
   Filter,
   X,
+  AlertCircle,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useMarketplace } from "@/context/MarketplaceContext";
 import { useCart } from "@/context/CartContext";
@@ -27,6 +29,13 @@ const MATERIALS = [
   "Sustainable",
 ];
 const WIDTHS = ["All", "44-45 inches", "54-56 inches", "58-60 inches"];
+
+const SORT_OPTIONS = [
+  { id: "relevant", label: "Most relevant" },
+  { id: "price_asc", label: "Price: Low to High" },
+  { id: "price_desc", label: "Price: High to Low" },
+  { id: "newest", label: "Newest Arrivals" },
+];
 
 function ProductCardSkeleton() {
   return (
@@ -48,6 +57,11 @@ export default function BrowseMarketplace() {
   const [addingId, setAddingId] = useState(null);
   const [addedIds, setAddedIds] = useState([]);
 
+  // Sort State & Dropdown Toggle
+  const [selectedSort, setSelectedSort] = useState("relevant");
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef(null);
+
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -60,6 +74,20 @@ export default function BrowseMarketplace() {
       document.body.style.overflow = "unset";
     };
   }, [isMobileFilterOpen]);
+
+  // Outside click listener for sort dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target)
+      ) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const {
     products,
@@ -81,6 +109,32 @@ export default function BrowseMarketplace() {
     resetFilters,
   } = useMarketplace();
 
+  // 🎯 WORKING SORTING LOGIC
+  const sortedProducts = React.useMemo(() => {
+    if (!products) return [];
+    const list = [...products];
+
+    switch (selectedSort) {
+      case "price_asc":
+        return list.sort(
+          (a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0),
+        );
+      case "price_desc":
+        return list.sort(
+          (a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0),
+        );
+      case "newest":
+        return list.sort(
+          (a, b) =>
+            new Date(b.createdAt || Date.now()).getTime() -
+            new Date(a.createdAt || Date.now()).getTime(),
+        );
+      case "relevant":
+      default:
+        return list;
+    }
+  }, [products, selectedSort]);
+
   const handleAddToCart = async (e, item) => {
     e.preventDefault();
     e.stopPropagation();
@@ -97,8 +151,12 @@ export default function BrowseMarketplace() {
     }
   };
 
+  const currentSortLabel =
+    SORT_OPTIONS.find((opt) => opt.id === selectedSort)?.label ||
+    "Most relevant";
+
   const FilterContent = () => (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       <div className="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/5">
         <h3 className="font-bold text-neutral-900 dark:text-white">Filters</h3>
         <button
@@ -190,7 +248,7 @@ export default function BrowseMarketplace() {
   );
 
   return (
-    <section className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 md:px-7 py-8">
+    <section className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 md:px-7 py-8 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <h2 className="text-xl sm:text-3xl font-bold text-neutral-900 dark:text-white">
           Browse Marketplace
@@ -205,14 +263,49 @@ export default function BrowseMarketplace() {
           <span className="text-neutral-500 font-medium text-xs sm:text-sm">
             {totalCount} products loaded
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-neutral-500 font-semibold hidden sm:inline">
-              Sort by:
-            </span>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18181B] font-bold text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 cursor-pointer">
-              Most relevant{" "}
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-            </button>
+
+          {/* 🎯 SORT BY DROPDOWN */}
+          <div className="relative" ref={sortDropdownRef}>
+            <div className="flex items-center gap-2">
+              <span className="text-neutral-500 font-semibold hidden sm:inline">
+                Sort by:
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSortDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18181B] font-bold text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 cursor-pointer shadow-2xs hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <span>{currentSortLabel}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isSortDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+            </div>
+
+            {isSortDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#18181B] p-1.5 shadow-xl z-30 animate-in fade-in zoom-in-95 duration-100">
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSort(opt.id);
+                      setIsSortDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                      selectedSort === opt.id
+                        ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold"
+                        : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {selectedSort === opt.id && (
+                      <Check className="w-3.5 h-3.5 text-indigo-500" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -251,7 +344,7 @@ export default function BrowseMarketplace() {
                 <ProductCardSkeleton key={i} />
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : sortedProducts.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-[#111114] rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
               <p className="text-sm font-bold text-neutral-500">
                 No fabrics match your selected filters.
@@ -265,82 +358,124 @@ export default function BrowseMarketplace() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {products.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/product/${item.id}`}
-                  className="group relative rounded-md border border-black/5 dark:border-white/10 bg-white dark:bg-[#111114] p-3 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between cursor-pointer block"
-                >
-                  <div>
-                    <div className="relative h-40 w-full rounded-md overflow-hidden bg-neutral-100">
-                      <img
-                        src={
-                          item.image ||
-                          "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600"
-                        }
-                        alt={item.title || item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600";
-                        }}
-                      />
-                    </div>
-                    <div className="pt-3 space-y-1">
-                      <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
-                        {item.title || item.name}
-                      </h3>
-                      <div className="flex items-center justify-between text-[12px] text-neutral-500 font-medium">
-                        <span>GSM: {item.gsm}</span>
-                        <span>{item.width}</span>
+              {sortedProducts.map((item) => {
+                // 🎯 DIRECT DB IMAGE URL ONLY (NO UN SPLASH HARDCODED FALLBACK)
+                const dbImage =
+                  item.imageUrl ||
+                  item.image ||
+                  (item.images && item.images[0]?.imageUrl);
+
+                // DYNAMIC STOCK STATUS
+                const stockVal =
+                  item.stock !== undefined ? Number(item.stock) : null;
+                const isAvailable = item.isAvailable !== false;
+                const isOutOfStock =
+                  stockVal !== null ? stockVal <= 0 : !isAvailable;
+                const isLowStock =
+                  stockVal !== null &&
+                  stockVal > 0 &&
+                  stockVal <= (item.moq || 100);
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/product/${item.id}`}
+                    className="group relative rounded-md border border-black/5 dark:border-white/10 bg-white dark:bg-[#111114] p-3 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between cursor-pointer block"
+                  >
+                    <div>
+                      {/* FABRIC IMAGE FROM DB */}
+                      <div className="relative h-40 w-full rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                        {dbImage ? (
+                          <img
+                            src={dbImage}
+                            alt={item.title || item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="text-center text-neutral-400 space-y-1">
+                            <ImageIcon className="w-8 h-8 mx-auto" />
+                            <span className="text-[10px] font-bold block">
+                              No Image
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center justify-between text-sm pt-1">
-                        <span className="font-bold text-neutral-900 dark:text-white">
-                          ₹{item.price}{" "}
-                          <span className="text-[12px] font-normal text-neutral-500">
-                            /meter
+
+                      <div className="pt-3 space-y-1">
+                        <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                          {item.title || item.name}
+                        </h3>
+                        <div className="flex items-center justify-between text-[12px] text-neutral-500 font-medium">
+                          <span>GSM: {item.gsm || "N/A"}</span>
+                          <span>{item.width || '58/60"'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm pt-1">
+                          <span className="font-bold text-neutral-900 dark:text-white">
+                            ₹{item.price}{" "}
+                            <span className="text-[12px] font-normal text-neutral-500">
+                              /meter
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-[10px] font-semibold text-neutral-500">
-                          MOQ {item.moq}m
-                        </span>
+                          <span className="text-[10px] font-semibold text-neutral-500">
+                            MOQ {item.moq}m
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/5 dark:border-white/5">
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="flex items-center gap-1 text-[13px] font-bold text-neutral-800 dark:text-neutral-200">
-                        <span className="truncate">
-                          {item.supplier ||
-                            item.supplierName ||
-                            "Verified Mill"}
-                        </span>
-                        <CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0" />
+
+                    <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/5 dark:border-white/5">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-1 text-[13px] font-bold text-neutral-800 dark:text-neutral-200">
+                          <span className="truncate">
+                            {item.supplier ||
+                              item.supplierName ||
+                              "Verified Mill"}
+                          </span>
+                          <CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0" />
+                        </div>
+
+                        {/* DYNAMIC IN STOCK BADGE */}
+                        {isOutOfStock ? (
+                          <div className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold">
+                            <AlertCircle className="w-3 h-3 text-rose-500" />{" "}
+                            Out of Stock
+                          </div>
+                        ) : isLowStock ? (
+                          <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            <Check className="w-3 h-3 text-amber-500" /> Low
+                            Stock ({stockVal}m)
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                            <Check className="w-3 h-3 text-emerald-500" /> In
+                            Stock {stockVal ? `(${stockVal}m)` : ""}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-                        <Check className="w-3 h-3 text-emerald-500" /> In Stock
-                      </div>
+
+                      <button
+                        onClick={(e) => handleAddToCart(e, item)}
+                        disabled={addingId === item.id || isOutOfStock}
+                        className={`p-1.5 rounded-xl transition-colors cursor-pointer z-10 shrink-0 ${
+                          isOutOfStock
+                            ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed"
+                            : addedIds.includes(item.id)
+                              ? "bg-emerald-600 text-white"
+                              : "bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-600 hover:text-white text-neutral-800 dark:text-neutral-200"
+                        }`}
+                      >
+                        {addingId === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : addedIds.includes(item.id) ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => handleAddToCart(e, item)}
-                      disabled={addingId === item.id}
-                      className={`p-1.5 rounded-xl transition-colors cursor-pointer z-10 shrink-0 ${
-                        addedIds.includes(item.id)
-                          ? "bg-emerald-600 text-white"
-                          : "bg-neutral-100 dark:bg-neutral-800 hover:bg-indigo-600 hover:text-white text-neutral-800 dark:text-neutral-200"
-                      }`}
-                    >
-                      {addingId === item.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : addedIds.includes(item.id) ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
           {hasMore && (
