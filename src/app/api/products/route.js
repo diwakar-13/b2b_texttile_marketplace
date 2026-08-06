@@ -23,14 +23,15 @@ export async function GET(request) {
     const limit = Number(searchParams.get("limit")) || 8;
     const offset = (page - 1) * limit;
 
-    const conditions = [eq(products.isAvailable, true)];
+    // 🎯 Removed strict isAvailable condition so out-of-stock items can render with dynamic badges
+    const conditions = [];
 
     if (category && category !== "All") {
       conditions.push(
         or(
           ilike(categories.slug, `%${category}%`),
           ilike(products.material, `%${category}%`),
-        )
+        ),
       );
     }
 
@@ -40,7 +41,7 @@ export async function GET(request) {
           ilike(products.name, `%${search}%`),
           ilike(products.material, `%${search}%`),
           ilike(supplierProfiles.businessName, `%${search}%`),
-        )
+        ),
       );
     }
 
@@ -49,7 +50,7 @@ export async function GET(request) {
     if (maxMoq) conditions.push(lte(products.moq, Number(maxMoq)));
 
     // Query DB with Limit & Offset
-    const resultList = await db
+    let query = db
       .select({
         id: products.id,
         title: products.name,
@@ -62,11 +63,13 @@ export async function GET(request) {
         color: products.color,
         moq: products.moq,
         stock: products.stock,
+        isAvailable: products.isAvailable,
         price: products.price,
         categoryName: categories.name,
         supplier: supplierProfiles.businessName,
-        image: productImages.imageUrl,
+        imageUrl: productImages.imageUrl,
         verified: supplierProfiles.id,
+        createdAt: products.createdAt,
       })
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))
@@ -77,20 +80,20 @@ export async function GET(request) {
           eq(products.id, productImages.productId),
           eq(productImages.isPrimary, true),
         ),
-      )
-      .where(and(...conditions))
-      .limit(limit)
-      .offset(offset);
+      );
 
-    // Image Fallback Handling
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const resultList = await query.limit(limit).offset(offset);
+
+    // 🎯 Direct Database Image mapping without hardcoded Unsplash fallback
     const formattedData = resultList.map((item) => ({
       ...item,
       price: Number(item.price),
       verified: true,
-      image:
-        item.image && item.image.startsWith("http")
-          ? item.image
-          : "https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?q=80&w=600",
+      image: item.imageUrl || null,
     }));
 
     return NextResponse.json({

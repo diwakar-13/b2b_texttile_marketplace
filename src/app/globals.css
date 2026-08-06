@@ -34,9 +34,8 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-instrument-serif);
+  --font-sans: var(--font-jakarta);
+  --font-heading: var(--font-jakarta);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -168,7 +167,7 @@
   html {
     scroll-behavior: smooth;
 
-    font-family: var(--font-geist-sans);
+    font-family: var(--font-jakarta);
   }
 
   body {
@@ -176,7 +175,7 @@
 
     color: var(--foreground);
 
-    font-family: var(--font-geist-sans);
+    font-family: var(--font-jakarta);
 
     text-rendering: optimizeLegibility;
 
@@ -197,11 +196,11 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-instrument-serif);
+    font-family: var(--font-jakarta);
 
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
 
-    font-weight: 500;
+    font-weight: 700;
   }
 
   button {

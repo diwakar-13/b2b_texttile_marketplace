@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,8 +11,6 @@ import {
   PhoneCall,
   ArrowRight,
   ShoppingCart,
-  LayoutDashboard,
-  User,
   LogOut,
 } from "lucide-react";
 import { useMarketplace } from "@/context/MarketplaceContext";
@@ -19,41 +18,55 @@ import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getUserProfile } from "@/action/getUserProfile";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [imgError, setImgError] = useState(false); // 🎯 Broken image state protection
 
   const { searchQuery, setSearchQuery, products } = useMarketplace();
-  const { itemCount } = useCart(); // 🎯 DB synced cart count
-
+  const { itemCount } = useCart();
   const searchRef = useRef(null);
   const router = useRouter();
   const supabase = createClient();
 
+  // 🎯 FETCH USER & USER PROFILE WITH ROLE
   useEffect(() => {
-    async function getUser() {
+    async function fetchUserData() {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-        if (data) setUserProfile(data);
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+
+      if (currentUser) {
+        setUser(currentUser);
+        const profile = await getUserProfile();
+        if (profile) {
+          setUserProfile(profile);
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
       }
     }
-    getUser();
+
+    fetchUserData();
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
+      async (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          const profile = await getUserProfile();
+          if (profile) setUserProfile(profile);
+        } else {
+          setUser(null);
+          setUserProfile(null);
+        }
       },
     );
+
     return () => {
       authListener?.subscription?.unsubscribe();
     };
@@ -85,14 +98,23 @@ export default function Navbar() {
     setUser(null);
     setUserProfile(null);
     setIsMobileMenuOpen(false);
-    router.push("/");
-    router.refresh();
+    window.location.href = "/";
   };
 
-  const dashboardPath =
-    userProfile?.role === "SUPPLIER"
-      ? "/supplier/dashboard"
-      : "/buyer/dashboard";
+  // 🎯 CASE-INSENSITIVE ROUTE CHECK ("SUPPLIER" / "supplier")
+  const getDashboardRoute = () => {
+    const role = userProfile?.role?.toUpperCase();
+    if (role === "SUPPLIER") {
+      return "/supplier/dashboard";
+    }
+    return "/buyer/dashboard";
+  };
+
+  // Initial letter fallback logic
+  const initialFallback =
+    userProfile?.fullName?.[0]?.toUpperCase() ||
+    user?.email?.[0]?.toUpperCase() ||
+    "U";
 
   return (
     <header className="sticky top-2 sm:top-4 z-50 w-full max-w-[1500px] mx-auto px-2 sm:px-6 md:px-7">
@@ -256,21 +278,23 @@ export default function Navbar() {
             </>
           ) : (
             <Link
-              href={dashboardPath}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-all border border-black/5"
+              href={getDashboardRoute()}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-all border border-black/5 cursor-pointer"
             >
-              <div className="size-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
-                {userProfile?.avatar ? (
+              {/* 🎯 SAFE AVATAR WITH BROKEN IMAGE PROTECTION */}
+              <div className="size-7 rounded-full bg-black text-white flex items-center justify-center font-extrabold text-xs uppercase overflow-hidden shrink-0 border border-black/10">
+                {userProfile?.avatar && !imgError ? (
                   <img
                     src={userProfile.avatar}
                     alt="Avatar"
+                    onError={() => setImgError(true)}
                     className="size-full object-cover"
                   />
                 ) : (
-                  userProfile?.fullName?.[0] || user.email?.[0] || "U"
+                  <span>{initialFallback}</span>
                 )}
               </div>
-              <span className="text-xs font-bold text-neutral-900 max-w-[100px] truncate">
+              <span className="text-xs font-bold text-neutral-900 max-w-[110px] truncate">
                 {userProfile?.fullName?.split(" ")[0] || "Account"}
               </span>
             </Link>
@@ -299,7 +323,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* COMPLETE MOBILE MENU DROPDOWN */}
+        {/* MOBILE MENU DROPDOWN */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -340,23 +364,23 @@ export default function Navbar() {
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                 </Link>
 
-                {/* 🎯 LOGGED IN MOBILE PROFILE LINK */}
                 {user && (
                   <Link
-                    href={dashboardPath}
+                    href={getDashboardRoute()}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-100 font-bold text-xs text-neutral-900 mt-2"
                   >
                     <span className="flex items-center gap-2">
-                      <div className="size-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] uppercase overflow-hidden">
-                        {userProfile?.avatar ? (
+                      <div className="size-6 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px] uppercase overflow-hidden shrink-0">
+                        {userProfile?.avatar && !imgError ? (
                           <img
                             src={userProfile.avatar}
                             alt="Avatar"
+                            onError={() => setImgError(true)}
                             className="size-full object-cover"
                           />
                         ) : (
-                          userProfile?.fullName?.[0] || user.email?.[0] || "U"
+                          <span>{initialFallback}</span>
                         )}
                       </div>
                       My Profile (
@@ -385,11 +409,10 @@ export default function Navbar() {
                   </Link>
                 </div>
               ) : (
-                /* 🎯 LOGOUT BUTTON FOR MOBILE */
                 <div className="pt-2 border-t border-black/5">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" /> Logout Account
                   </button>
