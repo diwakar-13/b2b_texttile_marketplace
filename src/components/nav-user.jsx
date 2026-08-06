@@ -57,7 +57,7 @@ export function NavUser({ user }) {
             <ChevronsUpDownIcon className="ml-auto size-4 text-neutral-500" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="min-w-56 rounded-2xl bg-white shadow-lg border border-black/5"
+            className="min-w-56 rounded-md bg-white shadow-lg border border-black/5"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -103,7 +103,7 @@ export function NavUser({ user }) {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              className="cursor-pointer font-bold text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50 py-2"
+              className="cursor-pointer font-bold text-xs  py-2"
               onClick={async () => {
                 await logout();
               }}
