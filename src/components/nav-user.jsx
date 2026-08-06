@@ -24,7 +24,9 @@ import {
   CreditCardIcon,
   BellIcon,
   LogOutIcon,
+  UserIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 export function NavUser({ user }) {
   const { isMobile } = useSidebar();
@@ -61,32 +63,29 @@ export function NavUser({ user }) {
                     <AvatarFallback>CN</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate font-medium text-black">
+                      {user.name}
+                    </span>
+                    <span className="truncate text-xs text-neutral-600">
+                      {user.email}
+                    </span>
                   </div>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SparklesIcon />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer  py-2"
+              >
+                <Link
+                  href="/buyer/profile"
+                  className="flex items-center gap-2 w-full"
+                >
+                  <UserIcon className="w-4 h-4 text-neutral-600" />
+                  <span>Account & Profile</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
