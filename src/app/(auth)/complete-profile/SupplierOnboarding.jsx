@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
+import AiOnboardingModal from "@/components/ai/AiOnboardingModal";
 
 export default function SupplierOnboarding({
   supplierStep,
@@ -97,10 +98,10 @@ export default function SupplierOnboarding({
       <div className="hidden lg:flex lg:col-span-4 bg-[#F8F9FC]/90 p-8 border-r border-neutral-200/60 flex-col justify-between relative">
         <div className="space-y-5">
           <div>
-            <h3 className="text-2xl font-bold text-neutral-900 tracking-normal ">
+            <h3 className="text-2xl font-bold text-neutral-900 tracking-normal">
               Setup Your Supplier Mill Storefront
             </h3>
-            <p className=" text-sm text-neutral-600 mt-1.5">
+            <p className="text-sm text-neutral-600 mt-1.5">
               Verify your factory details to start receiving RFQs.
             </p>
           </div>
@@ -151,12 +152,32 @@ export default function SupplierOnboarding({
       {/* RIGHT CONTENT */}
       <div className="lg:col-span-8 p-6 sm:p-12 flex flex-col justify-between space-y-6">
         <div className="space-y-6">
+          {/* AI VOICE & CHAT ONBOARDING ASSISTANT */}
+          <div className="mb-6">
+            <AiOnboardingModal
+              role="SUPPLIER"
+              onComplete={(aiData) => {
+                setSupplierForm((prev) => ({
+                  ...prev,
+                  businessName: aiData.businessName || prev.businessName,
+                  businessType: aiData.businessType || prev.businessType,
+                  contactNumber: aiData.contactNumber || prev.contactNumber,
+                  businessAddress:
+                    aiData.businessAddress || prev.businessAddress,
+                  fabricsOffered: aiData.fabricsOffered || prev.fabricsOffered,
+                  moq: String(aiData.minimumOrderQuantity || prev.moq),
+                }));
+                setSupplierStep(5);
+              }}
+            />
+          </div>
+
           {supplierStep === 1 && (
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-neutral-900">
                 Business Basic Info
               </h2>
-              <p className=" text-neutral-600">
+              <p className="text-neutral-600">
                 Let's start with your mill identity.
               </p>
               <div className="space-y-3 pt-2">
@@ -232,7 +253,7 @@ export default function SupplierOnboarding({
               <h2 className="text-2xl font-bold text-neutral-900">
                 Business Operations
               </h2>
-              <p className=" text-neutral-600">
+              <p className="text-neutral-600">
                 Mill location and working timing.
               </p>
               <div className="space-y-3 pt-2">
@@ -279,7 +300,7 @@ export default function SupplierOnboarding({
               <h2 className="text-2xl font-bold text-neutral-900">
                 Fabrics Catalog Offered
               </h2>
-              <p className=" text-neutral-600">
+              <p className="text-neutral-600">
                 Select textiles produced at your mill.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
@@ -322,7 +343,7 @@ export default function SupplierOnboarding({
               <h2 className="text-2xl font-bold text-neutral-900">
                 Minimum Order Quantity (MOQ)
               </h2>
-              <p className=" text-neutral-600">
+              <p className="text-neutral-600">
                 What is your monthly production capacity?
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -354,33 +375,48 @@ export default function SupplierOnboarding({
               <p className="text-neutral-600">
                 Ready to publish your mill storefront on Textil B2B Ecosystem.
               </p>
-              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200  space-y-1 font-semibold text-neutral-900">
+              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-1 font-semibold text-neutral-900">
                 <p>
                   • Business:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.businessName || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.businessName || "Not set"}
+                  </span>
                 </p>
                 <p>
                   • Business Type:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.businessType || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.businessType || "Not set"}
+                  </span>
                 </p>
                 <p>
                   • Contact:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.contactNumber || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.contactNumber || "Not set"}
+                  </span>
                 </p>
                 <p>
                   • Address:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.businessAddress || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.businessAddress || "Not set"}
+                  </span>
                 </p>
                 <p>
                   • Operating Hours:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.operatingHours || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.operatingHours || "Not set"}
+                  </span>
                 </p>
                 <p>
                   • Fabrics Offered:{" "}
-                  <span className="font-medium text-neutral-600 ">{supplierForm.fabricsOffered || "Not set"}</span>
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.fabricsOffered || "Not set"}
+                  </span>
                 </p>
                 <p>
-                  • MOQ: <span className="font-medium text-neutral-600 ">{supplierForm.moq} Meters</span>
+                  • MOQ:{" "}
+                  <span className="font-medium text-neutral-600">
+                    {supplierForm.moq} Meters
+                  </span>
                 </p>
               </div>
             </div>
@@ -406,7 +442,7 @@ export default function SupplierOnboarding({
             type="button"
             onClick={handleNextSupplierStep}
             disabled={loading || !isSupplierStepValid()}
-            className="px-8 h-11 bg-[#000] text-white font-bold  rounded-xl shadow-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none flex items-center gap-2"
+            className="px-8 h-11 bg-[#000] text-white font-bold rounded-xl shadow-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none flex items-center gap-2"
           >
             {loading ? (
               <>

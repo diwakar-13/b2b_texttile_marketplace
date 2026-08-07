@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Carousel, { Card } from "../ui/CarouselDemo";
+import { motion } from "framer-motion";
 
 const textilCategories = [
   {
@@ -9,7 +12,8 @@ const textilCategories = [
     category: "2,450+ products",
     content: (
       <p className="text-neutral-500">
-        Premium long-staple organic cotton, combed cotton, and raw slub varieties.
+        Premium long-staple organic cotton, combed cotton, and raw slub
+        varieties.
       </p>
     ),
   },
@@ -20,7 +24,8 @@ const textilCategories = [
     category: "1,240+ products",
     content: (
       <p className="text-neutral-500">
-        Pure European flax linen blends, pre-washed textures, and high GSM collections.
+        Pure European flax linen blends, pre-washed textures, and high GSM
+        collections.
       </p>
     ),
   },
@@ -31,7 +36,8 @@ const textilCategories = [
     category: "980+ products",
     content: (
       <p className="text-neutral-500">
-        Pure Mulberry silk, charmeuse, satin weave, and raw Tussar silk for luxury couture.
+        Pure Mulberry silk, charmeuse, satin weave, and raw Tussar silk for
+        luxury couture.
       </p>
     ),
   },
@@ -42,7 +48,8 @@ const textilCategories = [
     category: "1,760+ products",
     content: (
       <p className="text-neutral-500">
-        Heavyweight selvage denim, recycled stretch denim, and indigo wash options.
+        Heavyweight selvage denim, recycled stretch denim, and indigo wash
+        options.
       </p>
     ),
   },
@@ -53,7 +60,8 @@ const textilCategories = [
     category: "1,170+ products",
     content: (
       <p className="text-neutral-500">
-        Merino wool blends, cashmere, houndstooth suitings, and brushed outerwear.
+        Merino wool blends, cashmere, houndstooth suitings, and brushed
+        outerwear.
       </p>
     ),
   },
@@ -72,17 +80,38 @@ const textilCategories = [
 
 export default function LinearCarouselDemo() {
   const cards = textilCategories.map((card, index) => (
-    <Link key={card.src} href={`/marketplace?category=${card.categorySlug}`}>
-      <Card card={card} index={index} />
-    </Link>
+    <motion.div
+      key={card.src}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <Link href={`/marketplace?category=${card.categorySlug}`}>
+        <Card card={card} index={index} />
+      </Link>
+    </motion.div>
   ));
 
   return (
-    <div className="w-full h-full">
-      <h1 className="text-lg sm:text-xl font-bold text-[#111111] dark:text-white tracking-tight px-4 sm:px-6 md:px-7">
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="w-full h-full"
+    >
+      <motion.h1
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="text-lg sm:text-xl font-bold text-[#111111] dark:text-white tracking-tight px-4 sm:px-6 md:px-7"
+      >
         Premium Categories
-      </h1>
+      </motion.h1>
       <Carousel items={cards} />
-    </div>
+    </motion.div>
   );
 }

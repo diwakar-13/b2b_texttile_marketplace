@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
+import AiOnboardingModal from "@/components/ai/AiOnboardingModal";
 
 export default function BuyerOnboarding({
   buyerStep,
@@ -85,7 +86,7 @@ export default function BuyerOnboarding({
               Let's personalize Textil for your business
             </h3>
             <p className="text-sm text-neutral-500 mt-2">
-              This helps us show you the most relevant fabrics and suppliers.
+              Use smart AI onboarding or fill out the steps manually.
             </p>
           </div>
 
@@ -131,8 +132,30 @@ export default function BuyerOnboarding({
       </div>
 
       {/* RIGHT MAIN CONTENT AREA */}
-      <div className="lg:col-span-8 p-6 sm:p-12 flex flex-col justify-between space-y-6">
+      <div className="lg:col-span-8 p-6 sm:p-10 flex flex-col justify-between space-y-6">
         <div className="space-y-6">
+          {/* AI VOICE & CHAT ONBOARDING HELPER CARD */}
+          <div className="mb-4">
+            <AiOnboardingModal
+              role="BUYER"
+              onComplete={(aiData) => {
+                setBuyerForm((prev) => ({
+                  ...prev,
+                  businessType: aiData.businessType || prev.businessType,
+                  industry: aiData.industry || prev.industry,
+                  preferredFabric:
+                    aiData.preferredFabric || prev.preferredFabric,
+                  typicalMOQ: String(
+                    aiData.typicalOrderQuantity || prev.typicalMOQ,
+                  ),
+                  budgetRange: aiData.budgetRange || prev.budgetRange,
+                }));
+                // Jump to Location (Final Step 7) after AI confirmation
+                setBuyerStep(7);
+              }}
+            />
+          </div>
+
           {/* STEP 1 */}
           {buyerStep === 1 && (
             <div className="space-y-4">
@@ -214,7 +237,6 @@ export default function BuyerOnboarding({
                   Select all that apply to personalize your experience
                 </p>
               </div>
-
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {categories.map((cat) => {
                   const isSelected = buyerForm.categories.includes(cat.id);
@@ -240,7 +262,6 @@ export default function BuyerOnboarding({
                   );
                 })}
               </div>
-
               <div className="space-y-1.5 pt-2">
                 <label className="font-bold text-neutral-700">
                   Other (Specify)
@@ -417,9 +438,8 @@ export default function BuyerOnboarding({
           >
             Back
           </button>
-
           <div className="flex items-center gap-4">
-            <span className="font-bold text-neutral-500 text-xs md:text-sm ">
+            <span className="font-bold text-neutral-500 text-xs md:text-sm">
               Step {buyerStep} of 7
             </span>
             <button
