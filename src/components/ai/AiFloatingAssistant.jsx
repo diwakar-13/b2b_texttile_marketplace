@@ -243,20 +243,20 @@ export default function AiFloatingAssistant({
 
   return (
     <>
-      {/* 🌫️ MOBILE FULLSCREEN BACKDROP BLUR OVERLAY */}
+      {/* 🌫️ 100% FULLSCREEN BACKDROP BLUR FOR MOBILE & DESKTOP BACKGROUND */}
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 z-[9990] bg-black/40 backdrop-blur-md transition-all sm:hidden"
+          className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-md transition-all duration-300 sm:hidden"
         />
       )}
 
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] flex flex-col items-end font-sans max-w-[95vw]">
         {isOpen && (
           /* 🧊 GLASSY FROSTED CONTAINER */
-          <div className="mb-3 flex h-[82vh] max-h-[560px] w-[92vw] sm:w-[420px] flex-col overflow-hidden rounded-[28px] border border-white/60 dark:border-white/20 bg-white/50 dark:bg-[#111115]/60 backdrop-blur-xl shadow-2xl transition-all">
+          <div className="mb-3 flex h-[82vh] max-h-[560px] w-[92vw] sm:w-[420px] flex-col overflow-hidden rounded-[28px] border border-white/60 dark:border-white/20 bg-white/70 dark:bg-[#111115]/80 backdrop-blur-2xl shadow-[0_12px_40px_0_rgba(0,0,0,0.25)] transition-all">
             {/* HEADER */}
-            <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 sm:px-5 py-3.5 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 sm:px-5 py-3.5 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-md">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-black dark:bg-white text-white dark:text-black font-extrabold text-xs sm:text-sm shadow-xs">
                   T
@@ -317,10 +317,10 @@ export default function AiFloatingAssistant({
                   }`}
                 >
                   <div
-                    className={`max-w-[90%] rounded-[20px] px-4 py-3 shadow-xs border ${
+                    className={`max-w-[90%] rounded-[20px] px-4 py-3 shadow-2xs border ${
                       msg.sender === "user"
                         ? "bg-black/90 text-white dark:bg-white/90 dark:text-black font-medium border-transparent"
-                        : "bg-white/70 dark:bg-zinc-800/70 text-gray-900 dark:text-gray-100 border-white/60 dark:border-zinc-700/50 backdrop-blur-md"
+                        : "bg-white/80 dark:bg-zinc-800/80 text-gray-900 dark:text-gray-100 border-white/60 dark:border-zinc-700/50 backdrop-blur-md"
                     }`}
                   >
                     {msg.sender === "user" ? (

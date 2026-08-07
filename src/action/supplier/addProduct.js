@@ -31,7 +31,7 @@ export async function addProduct(formData) {
       return { success: false, error: "Supplier profile not found." };
     }
 
-    // 2. Fetch or set Category
+    // 2. Auto-assign Category
     const allCategories = await db.select().from(categories);
     let categoryId = formData.get("categoryId");
 
@@ -39,11 +39,17 @@ export async function addProduct(formData) {
       categoryId = allCategories[0].id;
     }
 
+    // Fallback if DB has 0 categories
     if (!categoryId) {
-      return {
-        success: false,
-        error: "Please select a valid fabric category.",
-      };
+      const [newCat] = await db
+        .insert(categories)
+        .values({
+          name: "Cotton Fabrics",
+          slug: "cotton-fabrics",
+          description: "All types of cotton fabrics",
+        })
+        .returning();
+      categoryId = newCat.id;
     }
 
     const name = formData.get("name");
@@ -51,9 +57,9 @@ export async function addProduct(formData) {
     const material = formData.get("material") || "Cotton";
     const composition = formData.get("composition") || "100% Cotton";
     const gsm = Number(formData.get("gsm")) || 180;
-    const width = formData.get("width") || "58/60 inches";
+    const width = formData.get("width") || '58/60"';
     const color = formData.get("color") || "Natural White";
-    const price = formData.get("price");
+    const price = formData.get("price") || "100";
     const stock = Number(formData.get("stock")) || 500;
     const moq = Number(formData.get("moq")) || 100;
     const imageUrl = formData.get("imageUrl");

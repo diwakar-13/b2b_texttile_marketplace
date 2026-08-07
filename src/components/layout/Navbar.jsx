@@ -151,7 +151,7 @@ export default function Navbar() {
               Suppliers
             </Link>
             <Link
-              href="#contact"
+              href="/contact"
               className="px-3 py-1.5 rounded-full hover:bg-neutral-100 text-neutral-800 transition-colors"
             >
               Contact Us
