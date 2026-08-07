@@ -148,7 +148,7 @@ export default function LoginPage() {
           </div>
 
           {/* GOOGLE OAUTH */}
-          <button
+          {/* <button
             type="button"
             onClick={async () => {
               const url = await signInWithGoogle();
@@ -157,7 +157,7 @@ export default function LoginPage() {
             className="w-full h-11 bg-white border border-black/10 rounded-xl text-xs font-bold text-neutral-800 flex items-center justify-center gap-2.5 hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
           >
             <FcGoogle className="w-4 h-4" /> Continue with Google
-          </button>
+          </button> */}
 
           <p className="text-center text-xs font-semibold text-neutral-500 pt-2">
             Don't have an account?{" "}

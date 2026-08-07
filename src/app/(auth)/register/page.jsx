@@ -191,7 +191,7 @@ export default function RegisterPage() {
           </div>
 
           {/* GOOGLE OAUTH */}
-          <button
+          {/* <button
             type="button"
             onClick={async () => {
               const url = await signInWithGoogle();
@@ -200,7 +200,7 @@ export default function RegisterPage() {
             className="w-full h-10 bg-white border border-black/10 rounded-xl text-xs font-bold text-neutral-800 flex items-center justify-center gap-2.5 hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
           >
             <FcGoogle className="w-4 h-4" /> Continue with Google
-          </button>
+          </button> */}
 
           <p className="text-center text-xs font-semibold text-neutral-500 pt-1">
             Already have an account?{" "}
