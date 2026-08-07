@@ -31,7 +31,7 @@ export async function middleware(request) {
     },
   );
 
-  // Sirf Supabase Auth Check (No DB Queries here)
+  // Supabase Auth Session Refresh / Check
   const {
     data: { user },
     error,
@@ -39,10 +39,11 @@ export async function middleware(request) {
 
   const pathname = request.nextUrl.pathname;
 
+  // 🎯 FIXED TYPO: /complete-folder -> /complete-profile
   const isProtectedRoute =
     pathname.startsWith("/buyer") ||
     pathname.startsWith("/supplier") ||
-    pathname.startsWith("/complete-folder");
+    pathname.startsWith("/complete-profile");
 
   if (isProtectedRoute) {
     if (error || !user) {
