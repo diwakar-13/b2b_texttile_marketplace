@@ -354,7 +354,7 @@ export default function Navbar() {
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                 </Link>
                 <Link
-                  href="#contact"
+                  href="/contact"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-50 font-bold text-xs text-neutral-800"
                 >
