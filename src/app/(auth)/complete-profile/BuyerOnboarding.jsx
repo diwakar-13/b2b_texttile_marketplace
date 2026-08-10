@@ -379,7 +379,7 @@ export default function BuyerOnboarding({
                 Select your average monthly procurement budget.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {["$2,000 - $10,000", "$10,000 - $50,000", "$50,000+"].map(
+                {["₹2,000 - ₹10,000", "₹10,000 - ₹50,000", "₹50,000+"].map(
                   (b) => (
                     <button
                       key={b}
