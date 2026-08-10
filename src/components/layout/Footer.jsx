@@ -10,6 +10,7 @@ import {
   FaTiktok,
 } from "react-icons/fa6";
 import { FiArrowRight } from "react-icons/fi";
+import { FaInstagram } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -74,34 +75,22 @@ export default function Footer() {
           {/* SOCIAL ICONS */}
           <div className="flex items-center gap-2">
             <a
-              href="#"
-              className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors"
-            >
-              <FaXTwitter className="w-2.5 h-2.5" />
-            </a>
-            <a
-              href="#"
-              className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors"
-            >
-              <FaMedium className="w-2.5 h-2.5" />
-            </a>
-            <a
-              href="#"
+              href="/https://www.linkedin.com/in/diwakarpandey13/"
               className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors"
             >
               <FaLinkedinIn className="w-2.5 h-2.5" />
             </a>
             <a
-              href="#"
+              href="/https://www.facebook.com/profile.php?id=100030056957980&rdid=VuVrnLqAwCW8w1I3&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1GAtirjFb7%2F#"
               className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors"
             >
               <FaFacebookF className="w-2.5 h-2.5" />
             </a>
             <a
-              href="#"
+              href="/https://www.instagram.com/diwakar__007?igsh=NzltYTAxaHNkc2xu"
               className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors"
             >
-              <FaTiktok className="w-2.5 h-2.5" />
+              <FaInstagram className="w-2.5 h-2.5" />
             </a>
           </div>
 
