@@ -46,9 +46,7 @@ export default function Footer() {
             >
               Become Supplier
             </Link>
-            <Link href="#" className="hover:text-neutral-900 transition-colors">
-              About Us
-            </Link>
+       
           </div>
 
           {/* COMPACT NEWSLETTER INPUT */}

@@ -77,17 +77,17 @@ export default function RecommendedProducts({ material, currentProductId }) {
     <div className="space-y-6 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold  text-neutral-900">
+          <h3 className="lg:text-2xl  font-bold  text-neutral-900">
             Recommended Fabrics
           </h3>
-          <p className="text-sm mt-2 text-neutral-500 font-medium">
+          <p className="lg:text-sm text-xs mt-2 text-neutral-500 font-medium">
             Similar {material} textiles from top verified mills
           </p>
         </div>
 
         <Link
           href="/marketplace"
-          className="text-sm font-bold text-indigo-600 hover:underline flex items-center gap-1"
+          className="lg:text-sm text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
         >
           View Marketplace <ArrowRight className="w-3.5 h-3.5" />
         </Link>
